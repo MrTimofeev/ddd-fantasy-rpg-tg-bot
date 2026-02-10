@@ -1,0 +1,31 @@
+[project]
+name = "ddd-fantasy-tg-bot"
+version = "0.1.0"
+description = "DDD-based text RPG for Telegram"
+authors = [
+    {name = "MrTimofeev"}
+]
+requires-python = ">=3.10,<3.15"
+dependencies = [
+    "aiogram (>=3.24.0,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "black (>=26.1.0,<27.0.0)",
+    "isort (>=7.0.0,<8.0.0)",
+    "mypy (>=1.19.1,<2.0.0)"
+]
+
+[tool.poetry]
+packages = [{ include = "ddd-fantasy-rpg", from = "src"}]
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

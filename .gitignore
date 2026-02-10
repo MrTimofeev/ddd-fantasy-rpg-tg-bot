@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.env
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Poetry
+poetry.lock
