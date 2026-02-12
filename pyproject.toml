@@ -24,7 +24,7 @@ dev = [
 ]
 
 [tool.poetry]
-packages = [{ include = "ddd-fantasy-rpg", from = "src"}]
+packages = [{ include = "ddd_fantasy_rpg", from = "src"}]
 
 
 [tool.pytest.ini_options]
