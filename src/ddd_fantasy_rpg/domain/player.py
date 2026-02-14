@@ -1,9 +1,8 @@
 from enum import Enum
-from dataclasses import dataclass, field
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from .item import Item, ItemType
+from .item import Item, ItemType, ItemStats
 
 
 class Race(Enum):
@@ -46,7 +45,6 @@ class Player:
         self._inventory: List[Item] = []
         self._equipped: dict[str, Item] = {}  # например: {"weapon": item}
         self._is_on_expedition = False
-        self._expedition_end_time: Optional[datetime] = None
 
         self._base_stats = self._calculate_base_stats()
 
@@ -77,16 +75,16 @@ class Player:
 
     @property
     def is_on_expedition(self) -> bool:
-        if self._expedition_end_time and datetime.now() >= self._expedition_end_time:
-            self._is_on_expedition = False
-            self._expedition_end_time = None
-        return self.is_on_expedition
+        return self._is_on_expedition
 
     def start_expedition(self, duration_minutes: int) -> None:
         if self._is_on_expedition:
             raise ValueError("Player is already on an expedition")
         self._is_on_expedition = True
-        self._expedition_end_time = datetime.now() + timedelta(minutes=duration_minutes)
+    
+    def complete_expedition(self) -> None:
+        self._is_on_expedition = False
+        
 
     def add_item(self, item: Item) -> None:
         """ Добавить предмет в инвентарь"""
@@ -103,7 +101,7 @@ class Player:
             ItemType.ARMOR: "armor",
             ItemType.HELMET: "helmet",
         }
-        
+
         if item.item_type not in slot_map:
             raise ValueError(f"Cannot equip item of type {item.item_type}")
 
@@ -118,3 +116,34 @@ class Player:
 
     def __repr__(self) -> str:
         return f"<Player id={self._id} name={self._name} level={self._level}>"
+
+    @staticmethod
+    def from_dict(data: dict) -> "Player":
+        """Создаёт Player из словаря (например, из ORM)."""
+        player = Player.__new__(Player)
+        player._id = data["id"]
+        player._telegram_id = data["telegram_id"]
+        player._name = data["name"]
+        player._race = Race(data["race"])
+        player._class = PlayerClass(data["player_class"])
+        player._level = data["level"]
+        player._exp = data.get("exp", 0)
+        player._is_on_expedition = data.get("is_on_expedition", False)
+
+        # Восстанавливаем инвентарь
+        inventory_data = data.get("inventory", [])
+        player._inventory = [
+            Item(
+                id=item["id"],
+                name=item["name"],
+                item_type=ItemType(item["item_type"]),
+                level_required=item["level_required"],
+                rarity=item["rarity"],
+                stats=ItemStats(**item["stats"]),
+            )
+            for item in inventory_data
+        ]
+
+        player._equipped = {}  # можно расширить позже
+        player._base_stats = player._calculate_base_stats()
+        return player
