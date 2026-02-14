@@ -19,18 +19,18 @@ class StartBattleUseCase:
         self._player_repo = player_repository
         self._battle_repo = battle_repository
         
-    def execute(
+    async def execute(
         self,
         player_id: str,
         opponent: Union[Monster, str] # str = opponent_player_id (для PVP)
     ) -> Battle:
         # 1. Загружаем игрока
-        player = self._player_repo.get_by_id(player_id)
+        player = await self._player_repo.get_by_id(player_id)
         if not player:
             raise ValueError(f"Player {player_id} not found")
         
         # 2. Проверяем, нет ли активного боя
-        active_battle = self._battle_repo.get_active_battle_for_player(player_id)
+        active_battle = await self._battle_repo.get_active_battle_for_player(player_id)
         if active_battle:
             raise ValueError("Player is alredy in battle")
         
@@ -47,7 +47,7 @@ class StartBattleUseCase:
         battle = Battle(player_combatant, opponent_combatant)
         
         # 5. Сохряняем
-        self._battle_repo.save(battle)
+        await self._battle_repo.save(battle)
         
         return battle
         

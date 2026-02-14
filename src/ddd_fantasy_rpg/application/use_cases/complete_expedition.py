@@ -16,9 +16,9 @@ class CompleteExpeditionUseCase:
         self._player_repo = player_repository
         self._start_battle_uc = start_battle_use_case
         
-    def execute(self, player_id: str) -> ExpeditionEvent:
+    async def execute(self, player_id: str) -> ExpeditionEvent:
         # 1. Получаем активную вылазку
-        expedition = self._expedition_repo.get_by_player_id(player_id)
+        expedition = await self._expedition_repo.get_by_player_id(player_id)
         if not expedition:
             raise ValueError("No active expedition found")
         if not expedition.is_finished():
@@ -33,14 +33,14 @@ class CompleteExpeditionUseCase:
             # (фактически исход боя будет позже)
             
             try:
-                self._start_battle_uc.execute(player_id, event.monster)
+                await self._start_battle_uc.execute(player_id, event.monster)
             except Exception as e:
-                # TODO: добавить логирования ошибок
-                pass
-        
+                print(f"Ошибка Боя: {e}")
+
         # 4. Сохраняем результат вылазки
         expedition.complete_with(event)
-        self._expedition_repo.save(expedition)
+    
+        await self._expedition_repo.save(expedition)
         
         return event
         

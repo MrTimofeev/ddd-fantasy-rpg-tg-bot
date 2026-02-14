@@ -18,17 +18,19 @@ class StartExpeditionUseCase:
         self._expedition_repo = expedition_repository
         
     
-    def execute(self, player_id: str, distance: ExpeditionDistance) -> Expedition:
-        player = self._player_repo.get_by_id(player_id)
+    async def execute(self, player_id: str, distance: ExpeditionDistance) -> Expedition:
+        player = await self._player_repo.get_by_id(player_id)
         if player is None:
             raise ValueError(f"Player with ID {player_id} not found")
         
-        active_expedition = self._expedition_repo.get_by_player_id(player_id)
+        active_expedition = await self._expedition_repo.get_by_player_id(player_id)
         if active_expedition and not active_expedition.is_finished():
             raise ValueError("Player is already on an expedition")
         
+        player.start_expedition(distance.duration_minutes)
         expedition = Expedition.start_for(player_id, distance)
         
-        self._expedition_repo.save(expedition)
+        await self._player_repo.save(player)
+        await self._expedition_repo.save(expedition)
         
         return expedition

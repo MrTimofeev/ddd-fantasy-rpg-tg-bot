@@ -5,9 +5,9 @@ from ..player import Player
 
 class PlayerRepository(ABC):
     @abstractmethod
-    def get_by_id(self, player_id: str) -> Optional[Player]:
+    async def get_by_id(self, player_id: str) -> Optional[Player]:
         raise NotImplementedError
     
     @abstractmethod
-    def save(self, player: Player) -> None:
+    async def save(self, player: Player) -> None:
         raise NotImplementedError

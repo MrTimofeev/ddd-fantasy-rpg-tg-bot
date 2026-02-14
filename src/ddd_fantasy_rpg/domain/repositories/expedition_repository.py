@@ -5,9 +5,9 @@ from ..expedition import Expedition
 
 class ExpeditionRepository(ABC):
     @abstractmethod
-    def save(self, expedition: Expedition) -> None:
+    async def save(self, expedition: Expedition) -> None:
         raise NotImplementedError
     
     @abstractmethod
-    def get_by_player_id(self, player_id: str) -> Optional[Expedition]:
+    async def get_by_player_id(self, player_id: str) -> Optional[Expedition]:
         raise NotImplementedError
