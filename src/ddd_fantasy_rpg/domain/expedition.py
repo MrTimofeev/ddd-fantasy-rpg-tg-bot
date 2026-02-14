@@ -1,15 +1,15 @@
 from enum import Enum
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
 
 from .moster import Monster
 
 
 class ExpeditionDistance(Enum):
-    NEAR = ("near", 10)
-    MEDIUM = ("medium", 20)
-    FAR = ("far", 30)
+    NEAR = ("near", 1) # 10
+    MEDIUM = ("medium", 1) # 20
+    FAR = ("far", 1) # 30
 
     def __init__(self, key: str, duration: int):
         self.key = key
@@ -55,7 +55,7 @@ class Expedition:
 
     @classmethod
     def start_for(cls, player_id: str, distance: ExpeditionDistance) -> "Expedition":
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         end = now + timedelta(minutes=distance.duration_minutes)
         return cls(
             player_id=player_id,
@@ -65,7 +65,7 @@ class Expedition:
         )
 
     def is_finished(self) -> bool:
-        return datetime.now() >= self.end_time
+        return datetime.now(timezone.utc) >= self.end_time
     
     def complete_with(self, event: ExpeditionEvent) -> None:
         if not self.is_finished():
