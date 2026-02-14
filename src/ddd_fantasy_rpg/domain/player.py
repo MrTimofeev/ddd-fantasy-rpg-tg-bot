@@ -1,6 +1,5 @@
 from enum import Enum
-from typing import List, Optional
-from datetime import datetime, timedelta, timezone
+from typing import List
 
 from .item import Item, ItemType, ItemStats
 
@@ -81,10 +80,9 @@ class Player:
         if self._is_on_expedition:
             raise ValueError("Player is already on an expedition")
         self._is_on_expedition = True
-    
+
     def complete_expedition(self) -> None:
         self._is_on_expedition = False
-        
 
     def add_item(self, item: Item) -> None:
         """ Добавить предмет в инвентарь"""
