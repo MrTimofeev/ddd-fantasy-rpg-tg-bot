@@ -24,16 +24,16 @@ def generate_monster_for_distance(distance: ExpeditionDistance) -> Monster:
     
     # Простая таблица монстров
     monster = [
-        ("Goblin", 20, 10),
-        ("Orc", 20, 15),
-        ("Troll", 20, 25),
-        ("Dragon", 20, 50),
+        ("Goblin", 5, 50),
+        ("Orc", 10, 100),
+        ("Troll", 15, 150),
+        ("Dragon", 20, 200),
     ]
     
     name, base_dmg, max_hp = random.choice(monster[:level // 2 + 1])
     
     # Дроп - случайный пердмет
-    rarity = min(5, level // 2)
+    rarity = min(5, level)
     drop_item = Item(
         id=f"drop_{name.lower()}_{level}",
         name=f"{name}'s Loot",
