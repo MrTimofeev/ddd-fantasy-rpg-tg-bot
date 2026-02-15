@@ -9,4 +9,6 @@ class SystemRandomProvider(RandomProvider):
     
     def choice(self, seq):
         return random.choice(seq)
-    
+ 
+    def random(self):
+        return random.random()   

@@ -19,7 +19,6 @@ class PlayerORM(Base):
     exp = Column(Integer, default=0)
     inventory = Column(JSON, default=list)
     equipped = Column(JSON, default=dict)
-    is_on_expedition = Column(Boolean, default=False)
 
 
 class ExpeditionORM(Base):

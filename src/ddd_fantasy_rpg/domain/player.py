@@ -43,7 +43,6 @@ class Player:
         self._exp = 0
         self._inventory: List[Item] = []
         self._equipped: dict[str, Item] = {}  # например: {"weapon": item}
-        self._is_on_expedition = False
 
         self._base_stats = self._calculate_base_stats()
 
@@ -71,19 +70,6 @@ class Player:
     @property
     def inventory(self) -> List[Item]:
         return self._inventory.copy()
-
-    @property
-    def is_on_expedition(self) -> bool:
-        return self._is_on_expedition
-
-    def start_expedition(self) -> None:
-        if self._is_on_expedition:
-            raise ValueError("Player is already on an expedition")
-        self._is_on_expedition = True
-
-    def complete_expedition(self) -> None:
-        self._is_on_expedition = False
-
     def add_item(self, item: Item) -> None:
         """ Добавить предмет в инвентарь"""
         self._inventory.append(item)

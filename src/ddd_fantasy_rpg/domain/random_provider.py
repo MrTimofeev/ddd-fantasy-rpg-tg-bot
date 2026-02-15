@@ -7,5 +7,11 @@ class RandomProvider(ABC):
     
     @abstractmethod
     def choice(self, seq):
-        pass
+        raise NotImplementedError
+    
+    @abstractmethod
+    def random(self):
+        raise NotImplementedError
+
+        
     

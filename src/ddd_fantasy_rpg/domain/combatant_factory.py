@@ -37,7 +37,7 @@ def create_combatant_from_player(player: Player) -> Combatant:
             intelligence=stats.get("intelligence", 10),
             max_hp=max_hp,
         ),
-        current_hp=max_hp,
+        _current_hp=max_hp,
         skills=skills,
     )
     
@@ -52,6 +52,6 @@ def create_combatant_from_monster(monster: Monster) -> Combatant:
             intelligence=1,
             max_hp=monster.max_hp,
         ),
-        current_hp=monster.max_hp,
+        _current_hp=monster.max_hp,
         skills=[], # TODO: монстры пока без скиллов
     )

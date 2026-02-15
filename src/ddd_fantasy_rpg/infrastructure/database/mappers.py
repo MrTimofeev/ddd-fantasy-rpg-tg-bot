@@ -61,7 +61,6 @@ def player_to_orm(player: Player) -> PlayerORM:
         exp=player._exp,
         inventory=inventory_data,
         equipped=equipped_data,
-        is_on_expedition=player.is_on_expedition,
     )
 
 
@@ -83,7 +82,6 @@ def player_from_orm(orm: PlayerORM) -> Player:
     player._exp = orm.exp
     player._inventory = inventory
     player._equipped = equipped
-    player._is_on_expedition = orm.is_on_expedition
     player._base_stats = player._calculate_base_stats()
     return player
 
@@ -116,7 +114,7 @@ def _combatant_from_dict(data: Dict[str, Any]) -> Combatant:
             intelligence=data["stats"]["intelligence"],
             max_hp=data["stats"]["max_hp"],
         ),
-        current_hp=data["current_hp"],
+        _current_hp=data["current_hp"],
         skills=[]  # TODO: десериализация скиллов
     )
 
@@ -169,7 +167,6 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
         mob_data = orm.outcome_data["monster"]
         drop_items = [_item_from_dict(item) for item in mob_data["drop_items"]]
         monster = Monster(  
-            id=mob_data["id"],
             name=mob_data["name"],
             level=mob_data["level"],
             base_damage=mob_data["base_damage"],

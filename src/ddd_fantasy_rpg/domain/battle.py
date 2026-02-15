@@ -25,37 +25,44 @@ class Combatant:
     name: str
     combatant_type: CombatantType
     stats: CombatantStats
-    current_hp: int
     skills: List[Skill] = field(default_factory=list)
-
-    # Внутренее состояние - не передается при создании
+    _current_hp: int = field(default=None)
     _skill_colldowns: Dict[str, int] = field(init=False, default_factory=dict)
 
     def __post_init__(self):
-        if self.current_hp > self.stats.max_hp:
-            self.current_hp = self.stats.max_hp
+        # Если HP не задан - используем max_hp
+        if self._current_hp is None:
+            self._current_hp = self.stats.max_hp
+        
+        # Ограничиваем HP диапозоном [0, max_hp]
+        if self._current_hp > self.stats.max_hp:
+            self._current_hp = self.stats.max_hp
         if self.current_hp < 0:
-            self.current_hp = 0
+            self._current_hp = 0
 
         self._skill_colldowns = {skill.name: 0 for skill in self.skills}
-
+    
+    @property
+    def current_hp(self):
+        return self._current_hp
+    
     @property
     def is_alive(self) -> bool:
         return self.current_hp > 0
-
-    def take_damage(self, damage: int) -> None:
-        self.current_hp = max(0, self.current_hp - damage)
 
     @property
     def available_skills(self) -> List[Skill]:
         return [s for s in self.skills if self._skill_colldowns[s.name] == 0]
 
-    def use_skill(self, skill_name: str) -> dict:
+    def _take_damage(self, damage: int) -> None:
+        self._current_hp = max(0, self._current_hp - damage)
+
+    def _use_skill(self, skill_name: str) -> dict:
         if skill_name not in self._skill_colldowns:
             raise ValueError(
-                f"Skill '{skill_name}' is not avaliable to this combatant")
+                f"Skill '{skill_name}' is not available to this combatant")
         if self._skill_colldowns[skill_name] > 0:
-            raise ValueError(f"Skill '{skill_name}' is on colldown")
+            raise ValueError(f"Skill '{skill_name}' is on cooldown")
 
         skill = next(s for s in self.skills if s.name == skill_name)
         self._skill_colldowns[skill_name] = skill.cooldown_turns
@@ -73,7 +80,7 @@ class Combatant:
         else:
             return skill.base_power  # для BUFF и прочих
 
-    def reduce_colldowns(self) -> None:
+    def _reduce_colldowns(self) -> None:
         """Уменьшает все активные coldown'ы на 1"""
         for name in self._skill_colldowns:
             if self._skill_colldowns[name] > 0:
@@ -171,7 +178,7 @@ class Battle:
             if self._is_critical_hit(actor, opponent):
                 damage = int(damage * 1.5)
                 result["details"] = "Critical hit!"
-            opponent.take_damage(damage)
+            opponent._take_damage(damage)
             result["damage"] = damage
 
         elif action.action_type == BattleActionType.FLEE:
@@ -188,17 +195,17 @@ class Battle:
             if not action.skill_name:
                 raise ValueError("Skill name is required")
             try:
-                effect = actor.use_skill(action.skill_name)
+                effect = actor._use_skill(action.skill_name)
                 skill = effect["skill"]
                 value = effect['effect_value']
 
                 if skill.skill_type == SkillType.DAMAGE:
-                    opponent.take_damage(value)
+                    opponent._take_damage(value)
                     result['damage'] = value
                     result["details"] = f'Used {skill.name} for {value} damage!'
                 elif skill.skill_type == SkillType.HEAL:
-                    actor.current_hp = min(
-                        actor.stats.max_hp, actor.current_hp + value)
+                    actor._current_hp = min(
+                        actor.stats.max_hp, actor._current_hp + value)
                     result["heal"] = value
                     result["details"] = f"Used {skill.name} and healed for {value} HP!"
                 else:
@@ -218,6 +225,6 @@ class Battle:
             self._current_turn_owner_id = opponent.id
 
             # Уменьшаем colldown у того, кто НЕ ходил (т.е у opponent)
-            opponent.reduce_colldowns()
+            opponent._reduce_colldowns()
 
         return result
