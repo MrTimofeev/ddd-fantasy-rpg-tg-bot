@@ -1,36 +1,57 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import timezone
 
-from ddd_fantasy_rpg.domain import Player, Expedition
-from ddd_fantasy_rpg.domain.battle import Battle
+from ddd_fantasy_rpg.domain import (
+    Player, Race, PlayerClass,
+    Expedition, ExpeditionDistance,
+    Item, 
+    Battle, ItemType, ItemStats, Combatant, CombatantType, CombatantStats,
+    Monster, MonsterEncounter
+    )
 from ddd_fantasy_rpg.infrastructure.database.models import PlayerORM, ExpeditionORM, BattleORM
-from ddd_fantasy_rpg.infrastructure.database.dto import ItemDTO
+
+# === Вспомогательные функции для Item ===
+def _item_to_dict(item: Item) -> Dict[str, Any]:
+    return {
+        "id": item.id,
+        "name": item.name,
+        "item_type": item.item_type.value,
+        "level_required": item.level_required,
+        "rarity": item.rarity.value if hasattr(item.rarity, 'value') else item.rarity,
+        "stats": {
+            "strength": item.stats.strength,
+            "agility": item.stats.agility,
+            "intelligence": item.stats.intelligence,
+            "max_hp": item.stats.max_hp,
+            "damage": item.stats.damage,
+        }
+    }
+
+
+def _item_from_dict(data: Dict[str, Any]) -> Item:
+    return Item(
+        id=data["id"],
+        name=data["name"],
+        item_type=ItemType(data["item_type"]),
+        level_required=data["level_required"],
+        rarity=data["rarity"],  # если Rarity(Enum) — будет int
+        stats=ItemStats(
+            strength=data["stats"]["strength"],
+            agility=data["stats"]["agility"],
+            intelligence=data["stats"]["intelligence"],
+            max_hp=data["stats"]["max_hp"],
+            damage=data["stats"]["damage"],
+        )
+    )
 
 
 # === Player Mapper ===
 def player_to_orm(player: Player) -> PlayerORM:
-    inventory_dto = [
-        ItemDTO(
-            id=item.id,
-            name=item.name,
-            item_type=item.item_type.value,
-            level_required=item.level_required,
-            rarity=item.rarity,
-            stats=item.stats.__dict__,
-        ).to_dict()
-        for item in player.inventory
-    ]
-    equipped_dto = {}
+    inventory_data = [_item_to_dict(item) for item in player.inventory]
+
+    equipped_data = {}
     for slot, item in player._equipped.items():
-        dto = ItemDTO(
-            id=item.id,
-            name=item.name,
-            item_type=item.item_type.value,
-            level_required=item.level_required,
-            rarity=item.rarity,
-            stats=item.stats.__dict__,
-        )
-        equipped_dto[slot] = dto.to_dict()
+        equipped_data[slot] = _item_to_dict(item)
 
     return PlayerORM(
         id=player.id,
@@ -40,55 +61,87 @@ def player_to_orm(player: Player) -> PlayerORM:
         player_class=player._class.value,
         level=player._level,
         exp=player._exp,
-        inventory=inventory_dto,
-        equipped=equipped_dto,
+        inventory=inventory_data,
+        equipped=equipped_data,
         is_on_expedition=player.is_on_expedition,
     )
 
 
 def player_from_orm(orm: PlayerORM) -> Player:
-    data = {
-        "id": orm.id,
-        "telegram_id": orm.telegram_id,
-        "name": orm.name,
-        "race": orm.race,
-        "player_class": orm.player_class,
-        "level": orm.level,
-        "exp": orm.exp,
-        "is_on_expedition": orm.is_on_expedition,
-        "inventory": orm.inventory or [],
+    inventory = [_item_from_dict(item_data)
+                 for item_data in (orm.inventory or [])]
+
+    equipped = {}
+    for slot, item_data in (orm.equipped or {}).items():
+        equipped[slot] = _item_from_dict(item_data)
+
+    player = Player.__new__(Player)
+    player._id = orm.id
+    player._telegram_id = orm.telegram_id
+    player._name = orm.name
+    player._race = Race(orm.race)
+    player._class = PlayerClass(orm.player_class)
+    player._level = orm.level
+    player._exp = orm.exp
+    player._inventory = inventory
+    player._equipped = equipped
+    player._is_on_expedition = orm.is_on_expedition
+    player._base_stats = player._calculate_base_stats()
+    return player
+
+
+# === Combatant Mapper (для Battle) ===
+def _combatant_to_dict(combatant: Combatant) -> Dict[str, Any]:
+    return {
+        "id": combatant.id,
+        "name": combatant.name,
+        "combatant_type": combatant.combatant_type.value,
+        "stats": {
+            "strength": combatant.stats.strength,
+            "agility": combatant.stats.agility,
+            "intelligence": combatant.stats.intelligence,
+            "max_hp": combatant.stats.max_hp,
+        },
+        "current_hp": combatant.current_hp,
+        "skills": []  # TODO: сериализация скиллов
     }
-    return Player.from_dict(data)
+
+
+def _combatant_from_dict(data: Dict[str, Any]) -> Combatant:
+    return Combatant(
+        id=data["id"],
+        name=data["name"],
+        combatant_type=CombatantType(data["combatant_type"]),
+        stats=CombatantStats(
+            strength=data["stats"]["strength"],
+            agility=data["stats"]["agility"],
+            intelligence=data["stats"]["intelligence"],
+            max_hp=data["stats"]["max_hp"],
+        ),
+        current_hp=data["current_hp"],
+        skills=[]  # TODO: десериализация скиллов
+    )
 
 
 # === Expedition Mapper ===
 def expedition_to_orm(expedition: Expedition) -> ExpeditionORM:
     outcome_type = None
     outcome_data = None
-    if expedition.outcome:
-        if hasattr(expedition.outcome, "monster"):
-            outcome_type = "monster"
-            outcome_data = {
-                "monster": {
-                    "id": expedition.outcome.monster.id,
-                    "name": expedition.outcome.monster.name,
-                    "level": expedition.outcome.monster.level,
-                    "base_damage": expedition.outcome.monster.base_damage,
-                    "max_hp": expedition.outcome.monster.max_hp,
-                    "drop_items": [
-                        {
-                            "id": item.id,
-                            "name": item.name,
-                            "item_type": item.item_type.value,
-                            "level_required": item.level_required,
-                            "rarity": item.rarity,
-                            "stats": item.stats.__dict__,
-                        }
-                        for item in expedition.outcome.monster.drop_items
-                    ],
-                    "flee_difficulty": expedition.outcome.monster.flee_difficulty,
-                }
+
+    if expedition.outcome and isinstance(expedition.outcome, MonsterEncounter):
+        monster = expedition.outcome.monster
+        outcome_type = "monster"
+        outcome_data = {
+            "monster": {
+                "id": monster.id,
+                "name": monster.name,
+                "level": monster.level,
+                "base_damage": monster.base_damage,
+                "max_hp": monster.max_hp,
+                "drop_items": [_item_to_dict(item) for item in monster.drop_items],
+                "flee_difficulty": monster.flee_difficulty,
             }
+        }
 
     return ExpeditionORM(
         player_id=expedition.player_id,
@@ -104,35 +157,21 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
     if not orm:
         return None
 
-    start_time = orm.start_time
-    end_time = orm.end_time
+    # Обработка временных зон
+    start_time = orm.start_time.replace(
+        tzinfo=timezone.utc) if orm.start_time.tzinfo is None else orm.start_time
+    end_time = orm.end_time.replace(
+        tzinfo=timezone.utc) if orm.end_time.tzinfo is None else orm.end_time
 
-    if start_time.tzinfo is None:
-        start_time = start_time.replace(tzinfo=timezone.utc)
-    if end_time.tzinfo is None:
-        end_time = end_time.replace(tzinfo=timezone.utc)
-
-    # Восстанавливаем distance
-    from ddd_fantasy_rpg.domain import ExpeditionDistance
+    # Восстановление distance
     distance = next(d for d in ExpeditionDistance if d.key == orm.distance)
 
-    # Восстанавливаем событие
+    # Восстановление события
     outcome = None
     if orm.outcome_type == "monster" and orm.outcome_data:
-        from ddd_fantasy_rpg.domain import Monster, Item, ItemType, ItemStats
         mob_data = orm.outcome_data["monster"]
-        drop_items = [
-            Item(
-                id=item["id"],
-                name=item["name"],
-                item_type=ItemType(item["item_type"]),
-                level_required=item["level_required"],
-                rarity=item["rarity"],
-                stats=ItemStats(**item["stats"]),
-            )
-            for item in mob_data["drop_items"]
-        ]
-        monster = Monster(
+        drop_items = [_item_from_dict(item) for item in mob_data["drop_items"]]
+        monster = Monster(  
             id=mob_data["id"],
             name=mob_data["name"],
             level=mob_data["level"],
@@ -141,7 +180,6 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
             drop_items=drop_items,
             flee_difficulty=mob_data["flee_difficulty"],
         )
-        from ddd_fantasy_rpg.domain.expedition import MonsterEncounter
         outcome = MonsterEncounter(monster=monster)
 
     return Expedition(
@@ -151,54 +189,39 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
         end_time=end_time,
         outcome=outcome,
     )
-    
-def serialize_combatant(combatant: "Combatant") -> dict:
-    return {
-        "id": combatant.id,
-        "name": combatant.name,
-        "combatant_type": combatant.combatant_type.value,  
-        "stats": combatant.stats.__dict__,
-        "current_hp": combatant.current_hp,
-        "skills": [], 
-    }
 
 
-def deserialize_combatant(data: dict) -> "Combatant":
-    from ddd_fantasy_rpg.domain.battle import Combatant, CombatantStats, CombatantType
-    return Combatant(
-        id=data["id"],
-        name=data["name"],
-        combatant_type=CombatantType(data["combatant_type"]),
-        stats=CombatantStats(**data["stats"]),
-        current_hp=data["current_hp"],
-        skills=[], 
-    )
-    
-# === Battele Mapper ===
-def battle_to_orm(battle: Battle):
+# === Battle Mapper ===
+def battle_to_orm(battle: Battle) -> BattleORM:
     battle_id = f"{battle._attacker.id}_vs_{battle._defender.id}"
     return BattleORM(
         id=battle_id,
         attacker_id=battle._attacker.id,
         defender_id=battle._defender.id,
-        attacker_data=serialize_combatant(battle._attacker),
-        defender_data=serialize_combatant(battle._defender),
+        attacker_data=_combatant_to_dict(battle._attacker),
+        defender_data=_combatant_to_dict(battle._defender),
         current_turn_owner_id=battle._current_turn_owner_id,
         is_finished=battle.is_finished,
         winner_id=battle.winner.id if battle.winner else None,
     )
 
+
 def battle_from_orm(orm: BattleORM) -> Optional[Battle]:
     if not orm:
         return None
 
-    attacker = deserialize_combatant(orm.attacker_data)
-    defender = deserialize_combatant(orm.defender_data)
-    
-    battle = Battle(attacker, defender)
+    attacker = _combatant_from_dict(orm.attacker_data)
+    defender = _combatant_from_dict(orm.defender_data)
+    winner = None
+    if orm.winner_id:
+        winner = attacker if orm.winner_id == attacker.id else defender
+
+    # Используем фабричный метод для обхода проверки is_alive
+    battle = Battle.__new__(Battle)
+    battle._attacker = attacker
+    battle._defender = defender
     battle._current_turn_owner_id = orm.current_turn_owner_id
     battle._is_finished = orm.is_finished
-    battle._winner = attacker if orm.winner_id == attacker.id else defender if orm.winner_id else None
+    battle._winner = winner
+    battle._flee_attemps = {attacker.id: 0, defender.id: 0}  # TODO: сохранять/загружать flee_attemps сейчас костыль, а еще лучше сделать фиксированные шанс, которые зависит от твоей ловкости и ловкости врага
     return battle
-
-
