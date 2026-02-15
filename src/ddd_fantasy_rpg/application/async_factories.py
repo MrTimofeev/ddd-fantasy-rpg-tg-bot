@@ -8,16 +8,16 @@ from ddd_fantasy_rpg.application import (
     CompleteBattleUseCase,
 )
 from ddd_fantasy_rpg.infrastructure.repositories import (
-    AsyncSqlitePlayerRepository,
-    AsyncSqliteExpeditionRepository,
-    AsyncSqliteBattleRepository,
+    AsyncPlayerRepository,
+    AsyncExpeditionRepository,
+    AsyncBattleRepository,
 )
 
 
 def create_async_use_cases(session: AsyncSession):
-    player_repo = AsyncSqlitePlayerRepository(session)
-    exp_repo = AsyncSqliteExpeditionRepository(session)
-    battle_repo = AsyncSqliteBattleRepository(session)
+    player_repo = AsyncPlayerRepository(session)
+    exp_repo = AsyncExpeditionRepository(session)
+    battle_repo = AsyncBattleRepository(session)
 
     time_provider = UtcTimeProvider()
     randome_provider = SystemRandomProvider()

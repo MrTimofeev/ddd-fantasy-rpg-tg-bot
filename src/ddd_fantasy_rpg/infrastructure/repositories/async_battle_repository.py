@@ -8,7 +8,7 @@ from ddd_fantasy_rpg.infrastructure.database.models import BattleORM
 from ddd_fantasy_rpg.infrastructure.database.mappers import battle_to_orm, battle_from_orm
 
 
-class AsyncSqliteBattleRepository(BattleRepository):
+class AsyncBattleRepository(BattleRepository):
     def __init__(self, session: AsyncSession):
         self._session = session
 

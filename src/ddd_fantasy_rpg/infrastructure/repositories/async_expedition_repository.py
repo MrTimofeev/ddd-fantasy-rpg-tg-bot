@@ -1,16 +1,16 @@
 from typing import Optional
 from datetime import datetime, timezone
-from sqlalchemy import text
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from ddd_fantasy_rpg.domain import Expedition, ExpeditionDistance
+from ddd_fantasy_rpg.domain import Expedition
 from ddd_fantasy_rpg.domain.repositories.expedition_repository import ExpeditionRepository
 from ddd_fantasy_rpg.infrastructure.database.models import ExpeditionORM
 from ddd_fantasy_rpg.infrastructure.database.mappers import expedition_to_orm, expedition_from_orm
 
 
-class AsyncSqliteExpeditionRepository(ExpeditionRepository):
+class AsyncExpeditionRepository(ExpeditionRepository):
     def __init__(self, session: AsyncSession):
         self._session = session
 
@@ -34,28 +34,14 @@ class AsyncSqliteExpeditionRepository(ExpeditionRepository):
         - еще не обработаны (outcome_type IS NULL).
         """
         now = datetime.now(timezone.utc)
-        stmt = text("""
-            SELECT player_id, distance, start_time, end_time, outcome_type, outcome_data
-            FROM expeditions
-            WHERE end_time <= :now AND outcome_type IS NULL
-        """)
-        result = await self._session.execute(stmt, {"now": now})
-        rows = result.fetchall()
-
-        expeditions = []
-        for row in rows:
-            player_id, distance_key, start_time, end_time, outcome_type, outcome_data = row
-
-            # Воссоздаем объект Expedition без outcome (он None)
-            distance = next(
-                d for d in ExpeditionDistance if d.key == distance_key)
-            expedition = Expedition(
-                player_id=player_id,
-                distance=distance,
-                start_time=start_time,
-                end_time=end_time,
-                outcome=None
+        stmt = select(ExpeditionORM).where(
+            and_(
+                ExpeditionORM.end_time <= now,
+                ExpeditionORM.outcome_type.is_(None)
             )
-            expeditions.append(expedition)
+        )
+        result = await self._session.execute(stmt)
+        orm_objects = result.scalars().all()
 
-        return expeditions
+
+        return [expedition_from_orm(orm) for orm in orm_objects]
