@@ -9,7 +9,7 @@ from .expedition import (
 )
 
 from .monster import Monster
-from .item import Item, ItemType, ItemStats
+from .item import Item, ItemType, ItemStats, Rarity
 from .random_provider import RandomProvider
 
 
@@ -37,7 +37,7 @@ def generate_monster_for_distance(
     name, base_dmg, max_hp = random_provider.choice(monster[:level // 2 + 1])
 
     # Дроп - случайный пердмет
-    rarity = min(5, level)
+    rarity = Rarity.from_level(level)
     drop_item = Item(
         id=f"drop_{name.lower()}_{level}",
         name=f"{name}'s Loot",
