@@ -1,6 +1,6 @@
 from .player import Player, Race, PlayerClass
 from .item import Item, ItemType, ItemStats
-from .moster import Monster
+from .monster import Monster
 from .battle import Battle, BattleAction, BattleActionType
 from .expedition import (
     Expedition,

@@ -1,5 +1,5 @@
 from .player import Player, PlayerClass
-from .moster import Monster
+from .monster import Monster
 from .battle import Combatant, CombatantStats, CombatantType
 from .skill import Skill, SkillType
 

@@ -6,7 +6,7 @@ class ItemType(Enum):
     WEAPON = "weapon"
     ARMOR = "armor"
     HELMET = "helmet"
-    CONSUMABLE = "consumble"
+    CONSUMABLE = "consumable"
     RESOURCE = "resource"
     
 @dataclass(frozen=True)

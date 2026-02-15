@@ -82,7 +82,7 @@ class Combatant:
 
 class BattleActionType(Enum):
     ATTACK = "attack"
-    USE_SKILL = "user_skill"
+    USE_SKILL = "use_skill"
     USE_ITEM = "use_item"
     FLEE = "flee"
 
@@ -95,15 +95,15 @@ class BattleAction:
 
 
 class Battle:
-    def __init__(self, attaker: Combatant, defender: Combatant):
-        if not attaker.is_alive or not defender.is_alive:
+    def __init__(self, attacker: Combatant, defender: Combatant):
+        if not attacker.is_alive or not defender.is_alive:
             raise ValueError("Both combatants must be alive to start a battle")
-        self._attacker = attaker
+        self._attacker = attacker
         self._defender = defender
-        self._current_turn_owner_id = attaker.id
+        self._current_turn_owner_id = attacker.id
         self._is_finished = False
         self._winner: Optional[Combatant] = None
-        self._flee_attemps: Dict[str, int] = {attaker.id: 0, defender.id: 0}
+        self._flee_attemps: Dict[str, int] = {attacker.id: 0, defender.id: 0}
 
     @property
     def is_finished(self) -> bool:
@@ -130,9 +130,9 @@ class Battle:
         base = attacker.stats.strength
         return base
 
-    def _is_critical_hit(self, attaker: Combatant, defender: Combatant) -> bool:
+    def _is_critical_hit(self, attacker: Combatant, defender: Combatant) -> bool:
         # Шанс крита = (ловкость атакующего) / (ловкость защищающегося + 10)
-        crit_chance = attaker.stats.agility / (defender.stats.agility + 10)
+        crit_chance = attacker.stats.agility / (defender.stats.agility + 10)
 
         # TODO: увеличить шанс крита
         return random() < min(crit_chance, 0)  # макс 50%
