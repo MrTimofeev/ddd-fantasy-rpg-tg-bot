@@ -3,15 +3,21 @@ from unittest.mock import Mock
 
 from ddd_fantasy_rpg.domain.player import Player, Race, PlayerClass
 from ddd_fantasy_rpg.domain.expedition import ExpeditionDistance, Expedition, MonsterEncounter
+from ddd_fantasy_rpg.infrastructure.time import UtcTimeProvider
+from ddd_fantasy_rpg.infrastructure.random import SystemRandomProvider
 from ddd_fantasy_rpg.application.use_cases.complete_expedition import CompleteExpeditionUseCase
 from ddd_fantasy_rpg.application.use_cases.start_battle import StartBattleUseCase
 
 
 def test_complete_expedition_starts_battle():
     random.seed(42)
-
+    time_provider = UtcTimeProvider()
+    randome_provider = SystemRandomProvider()
     # Создаём вылазку и сразу "завершаем" её
-    expedition = Expedition.start_for("p1", ExpeditionDistance.NEAR)
+    expedition = Expedition.start_for(
+        player_id="p1",
+        distance=ExpeditionDistance.NEAR,
+        time_provider=time_provider)
     expedition.end_time = expedition.start_time  # теперь is_finished() == True
 
     expedition_repo = Mock()
@@ -25,7 +31,12 @@ def test_complete_expedition_starts_battle():
     battle_uc = Mock(spec=StartBattleUseCase)
 
     use_case = CompleteExpeditionUseCase(
-        expedition_repo, player_repo, battle_uc)
+        expedition_repository=expedition_repo,
+        player_repository=player_repo,
+        start_battle_use_case=battle_uc,
+        time_provider=time_provider,
+        randome_provider=randome_provider
+    )
 
     result = use_case.execute("p1")
 
