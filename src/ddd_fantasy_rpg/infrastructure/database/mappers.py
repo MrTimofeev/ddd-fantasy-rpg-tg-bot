@@ -13,7 +13,6 @@ from ddd_fantasy_rpg.infrastructure.database.models import PlayerORM, Expedition
 # === Вспомогательные функции для Item ===
 def _item_to_dict(item: Item) -> Dict[str, Any]:
     return {
-        "id": item.id,
         "name": item.name,
         "item_type": item.item_type.value,
         "level_required": item.level_required,
@@ -30,7 +29,6 @@ def _item_to_dict(item: Item) -> Dict[str, Any]:
 
 def _item_from_dict(data: Dict[str, Any]) -> Item:
     return Item(
-        id=data["id"],
         name=data["name"],
         item_type=ItemType(data["item_type"]),
         level_required=data["level_required"],
@@ -133,7 +131,6 @@ def expedition_to_orm(expedition: Expedition) -> ExpeditionORM:
         outcome_type = "monster"
         outcome_data = {
             "monster": {
-                "id": monster.id,
                 "name": monster.name,
                 "level": monster.level,
                 "base_damage": monster.base_damage,

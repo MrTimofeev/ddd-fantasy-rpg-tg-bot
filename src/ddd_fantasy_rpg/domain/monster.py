@@ -6,7 +6,6 @@ from .item import Item
 
 @dataclass(frozen=True)
 class Monster:
-    id: str
     name: str
     level: int
     base_damage: int

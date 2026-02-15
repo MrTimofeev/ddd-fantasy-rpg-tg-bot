@@ -2,6 +2,7 @@ from .player import Player, PlayerClass
 from .monster import Monster
 from .battle import Combatant, CombatantStats, CombatantType
 from .skill import Skill, SkillType
+from .utils import generate_id
 
 
 def create_combatant_from_player(player: Player) -> Combatant:
@@ -42,7 +43,7 @@ def create_combatant_from_player(player: Player) -> Combatant:
     
 def create_combatant_from_monster(monster: Monster) -> Combatant:
     return Combatant(
-        id=monster.id,
+        id=generate_id(),
         name=monster.name,
         combatant_type=CombatantType.MONSTER,
         stats=CombatantStats(

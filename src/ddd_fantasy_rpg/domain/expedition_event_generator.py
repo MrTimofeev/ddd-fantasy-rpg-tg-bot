@@ -39,7 +39,6 @@ def generate_monster_for_distance(
     # Дроп - случайный пердмет
     rarity = Rarity.from_level(level)
     drop_item = Item(
-        id=f"drop_{name.lower()}_{level}",
         name=f"{name}'s Loot",
         item_type=ItemType.WEAPON,
         level_required=level,
@@ -48,7 +47,6 @@ def generate_monster_for_distance(
     )
 
     return Monster(
-        id=f"mob_{random.randint(1000, 9999)}",
         name=name,
         level=level,
         base_damage=base_dmg,

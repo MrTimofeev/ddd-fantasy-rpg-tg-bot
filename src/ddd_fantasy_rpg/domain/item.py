@@ -43,7 +43,6 @@ class ItemStats:
     
 @dataclass(frozen=True)
 class Item:
-    id: str
     name: str
     item_type: ItemType
     level_required: int
