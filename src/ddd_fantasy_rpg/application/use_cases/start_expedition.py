@@ -29,7 +29,7 @@ class StartExpeditionUseCase:
         if active_expedition and not active_expedition.is_finished(self._time_provider):
             raise ValueError("Player is already on an expedition")
         
-        player.start_expedition(distance.duration_minutes)
+        player.start_expedition()
         expedition = Expedition.start_for(
             player_id=player_id,
             distance=distance,

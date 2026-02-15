@@ -76,7 +76,7 @@ class Player:
     def is_on_expedition(self) -> bool:
         return self._is_on_expedition
 
-    def start_expedition(self, duration_minutes: int) -> None:
+    def start_expedition(self) -> None:
         if self._is_on_expedition:
             raise ValueError("Player is already on an expedition")
         self._is_on_expedition = True
