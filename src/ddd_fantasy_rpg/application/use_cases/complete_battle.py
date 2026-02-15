@@ -47,8 +47,7 @@ class CompleteBattleUseCase:
         
         elif result["player_died"]:
             # Игрок умирает - теряет инвентарь
-            player._inventory.clear()
-            # TODO: установить время воскрешения
+            player.die()
             await self._player_repo.save(player)
         
 

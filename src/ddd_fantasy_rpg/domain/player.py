@@ -112,36 +112,11 @@ class Player:
 
         return self._base_stats.copy()
 
+    def die(self) -> None:
+        """Обрабатываем смерт игрока."""
+        self._inventory.clear()
+        # TODO: установить флаг смерти, время воскрешения и т.д.
+        
+    
     def __repr__(self) -> str:
         return f"<Player id={self._id} name={self._name} level={self._level}>"
-
-    @staticmethod
-    def from_dict(data: dict) -> "Player":
-        """Создаёт Player из словаря (например, из ORM)."""
-        player = Player.__new__(Player)
-        player._id = data["id"]
-        player._telegram_id = data["telegram_id"]
-        player._name = data["name"]
-        player._race = Race(data["race"])
-        player._class = PlayerClass(data["player_class"])
-        player._level = data["level"]
-        player._exp = data.get("exp", 0)
-        player._is_on_expedition = data.get("is_on_expedition", False)
-
-        # Восстанавливаем инвентарь
-        inventory_data = data.get("inventory", [])
-        player._inventory = [
-            Item(
-                id=item["id"],
-                name=item["name"],
-                item_type=ItemType(item["item_type"]),
-                level_required=item["level_required"],
-                rarity=item["rarity"],
-                stats=ItemStats(**item["stats"]),
-            )
-            for item in inventory_data
-        ]
-
-        player._equipped = {}  # можно расширить позже
-        player._base_stats = player._calculate_base_stats()
-        return player
