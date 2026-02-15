@@ -19,11 +19,6 @@ class AsyncSqlitePlayerRepository(PlayerRepository):
 
     async def save(self, player: Player) -> None:
         orm = player_to_orm(player)
-        existing = await self.get_by_id(player.id)
-
-        if existing:
-            merged = await self._session.merge(orm)
-            await self._session.commit()
-        else:
-            self._session.add(orm)
-            await self._session.commit()
+        merged = await self._session.merge(orm)
+        await self._session.commit()
+        
