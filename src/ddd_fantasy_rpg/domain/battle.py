@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional, List
-from random import random
 
 from .skill import Skill, SkillType
+from .random_provider import RandomProvider
 
 
 class CombatantType(Enum):
@@ -110,7 +110,7 @@ class Battle:
         self._current_turn_owner_id = attacker.id
         self._is_finished = False
         self._winner: Optional[Combatant] = None
-        self._flee_attemps: Dict[str, int] = {attacker.id: 0, defender.id: 0}
+        self._flee_attempts: Dict[str, int] = {attacker.id: 0, defender.id: 0}
 
     @property
     def is_finished(self) -> bool:
@@ -137,27 +137,27 @@ class Battle:
         base = attacker.stats.strength
         return base
 
-    def _is_critical_hit(self, attacker: Combatant, defender: Combatant) -> bool:
+    def _is_critical_hit(self, attacker: Combatant, defender: Combatant, randome_provider: RandomProvider) -> bool:
         # Шанс крита = (ловкость атакующего) / (ловкость защищающегося + 10)
         crit_chance = attacker.stats.agility / (defender.stats.agility + 10)
 
         # TODO: увеличить шанс крита
-        return random() < min(crit_chance, 0)  # макс 50%
+        return randome_provider.random() < min(crit_chance, 0)  # макс 50%
 
-    def _can_flee(self, fleeing: Combatant, opponent: Combatant) -> bool:
+    def _can_flee(self, fleeing: Combatant, opponent: Combatant, randome_provider: RandomProvider) -> bool:
         # шас побега растет с каждой попыткой
-        attemps = self._flee_attemps[fleeing.id]
+        attemps = self._flee_attempts[fleeing.id]
         base_chance = 0.3 + (attemps * 0.2)  # 30% 40% 70%
         agility_factor = fleeing.stats.agility / (opponent.stats.agility + 1)
         total_chance = min(base_chance * agility_factor, 0.9)
-        success = random() < total_chance
+        success =  randome_provider.random() < total_chance
         if success:
             return True
         else:
-            self._flee_attemps[fleeing.id] += 1
+            self._flee_attempts[fleeing.id] += 1
             return False
 
-    def perform_action(self, acting_combatant_id: str, action: BattleAction) -> dict:
+    def perform_action(self, acting_combatant_id: str, action: BattleAction, randome_provider: RandomProvider) -> dict:
         if self._is_finished:
             raise ValueError("Battle is already finished")
 
@@ -175,14 +175,14 @@ class Battle:
 
         if action.action_type == BattleActionType.ATTACK:
             damage = self._calculate_base_damage(actor)
-            if self._is_critical_hit(actor, opponent):
+            if self._is_critical_hit(actor, opponent, randome_provider):
                 damage = int(damage * 1.5)
                 result["details"] = "Critical hit!"
             opponent._take_damage(damage)
             result["damage"] = damage
 
         elif action.action_type == BattleActionType.FLEE:
-            if self._can_flee(actor, opponent):
+            if self._can_flee(actor, opponent, randome_provider):
                 result["details"] = "Fled successfully!"
                 self._end_battle(opponent)  # Победитель - тот, кто остался
                 self._current_turn_owner_id = None
