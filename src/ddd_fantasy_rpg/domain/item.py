@@ -18,7 +18,7 @@ class Rarity(Enum):
     
     @staticmethod
     def from_level(level: int) -> "Rarity":
-        """Преобразует уровень в редкость пердмета."""
+        """Преобразует уровень в редкость прeдмета."""
         if level >=9:
             return Rarity.LEGENDARY
         elif level >=7:

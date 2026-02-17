@@ -3,7 +3,7 @@ from datetime import timezone
 
 from ddd_fantasy_rpg.domain import (
     Player, Race, PlayerClass,
-    Expedition, ExpeditionDistance,
+    Expedition, ExpeditionDistance, ExpeditionStatus, 
     Item, 
     Battle, ItemType, ItemStats, Combatant, CombatantType, CombatantStats,
     Monster, MonsterEncounter
@@ -145,6 +145,7 @@ def expedition_to_orm(expedition: Expedition) -> ExpeditionORM:
         end_time=expedition.end_time,
         outcome_type=outcome_type,
         outcome_data=outcome_data,
+        status=expedition.status.value,
     )
 
 
@@ -182,6 +183,7 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
         start_time=start_time,
         end_time=end_time,
         outcome=outcome,
+        status=ExpeditionStatus(orm.status), 
     )
 
 
@@ -217,5 +219,5 @@ def battle_from_orm(orm: BattleORM) -> Optional[Battle]:
     battle._current_turn_owner_id = orm.current_turn_owner_id
     battle._is_finished = orm.is_finished
     battle._winner = winner
-    battle._flee_attemps = {attacker.id: 0, defender.id: 0}  # TODO: сохранять/загружать flee_attemps сейчас костыль, а еще лучше сделать фиксированные шанс, которые зависит от твоей ловкости и ловкости врага
+    battle._flee_attempts = {attacker.id: 0, defender.id: 0}  # TODO: сохранять/загружать flee_attempts сейчас костыль, а еще лучше сделать фиксированные шанс, которые зависит от твоей ловкости и ловкости врага
     return battle

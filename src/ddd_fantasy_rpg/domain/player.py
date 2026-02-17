@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from .item import Item, ItemType, ItemStats
+from .item import Item, ItemType
 
 
 class Race(Enum):
@@ -48,7 +48,7 @@ class Player:
 
     def _calculate_base_stats(self) -> dict:
         """ Базовые статы в зависимости от рассы и класса."""
-        stats = {"strength": 10, "agility": 10, "intelegence": 10}
+        stats = {"strength": 10, "agility": 10, "intellegence": 10}
 
         # Пример бонусов
         if self._race == Race.ORC:

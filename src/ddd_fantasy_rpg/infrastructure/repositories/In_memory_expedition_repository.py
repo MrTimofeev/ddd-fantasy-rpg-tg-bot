@@ -13,3 +13,5 @@ class InMemoryExpeditionRepository(ExpeditionRepository):
         
     def get_by_player_id(self, player_id: str) -> Optional[Expedition]:
         return self._expeditions.get(player_id)
+    
+    

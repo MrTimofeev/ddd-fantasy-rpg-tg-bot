@@ -35,7 +35,6 @@ class StartExpeditionUseCase:
             time_provider=self._time_provider
         )
         
-        await self._player_repo.save(player)
         await self._expedition_repo.save(expedition)
         
         return expedition

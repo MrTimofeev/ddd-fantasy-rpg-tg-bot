@@ -20,7 +20,7 @@ def create_async_use_cases(session: AsyncSession):
     battle_repo = AsyncBattleRepository(session)
 
     time_provider = UtcTimeProvider()
-    randome_provider = SystemRandomProvider()
+    random_provider = SystemRandomProvider()
 
     start_battle_uc = StartBattleUseCase(player_repo, battle_repo)
     start_exp_uc = StartExpeditionUseCase(player_repo, exp_repo, time_provider)
@@ -29,13 +29,16 @@ def create_async_use_cases(session: AsyncSession):
         player_repo,
         start_battle_uc,
         time_provider,
-        randome_provider
+        random_provider
     )
-    complete_battle_uc = CompleteBattleUseCase(player_repo, battle_repo)
+    complete_battle_uc = CompleteBattleUseCase(player_repo, battle_repo, exp_repo)
 
     return {
         "start_expedition": start_exp_uc,
         "complete_expedition": complete_exp_uc,
         "start_battle": start_battle_uc,
         "complete_battle": complete_battle_uc,
+        "player_repo": player_repo,
+        "exp_repo": exp_repo,
+        "battle_repo": battle_repo,
     }
