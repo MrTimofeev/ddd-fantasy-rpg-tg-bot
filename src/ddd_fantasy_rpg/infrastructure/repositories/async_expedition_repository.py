@@ -37,7 +37,8 @@ class AsyncExpeditionRepository(ExpeditionRepository):
         stmt = select(ExpeditionORM).where(
             and_(
                 ExpeditionORM.end_time <= now,
-                ExpeditionORM.outcome_type.is_(None)
+                ExpeditionORM.outcome_type.is_(None),
+                ExpeditionORM.status == "active"
             )
         )
         result = await self._session.execute(stmt)
@@ -45,3 +46,14 @@ class AsyncExpeditionRepository(ExpeditionRepository):
 
 
         return [expedition_from_orm(orm) for orm in orm_objects]
+    
+    async def get_active_expeditions(self) -> list[Exception]:
+        stmt = select(ExpeditionORM).where(ExpeditionORM.status == "active")
+        result = await self._session.execute(stmt)
+        orm_object = result.scalars().all()
+        
+        return [expedition_from_orm(orm) for orm in orm_object if orm]
+    
+    
+        
+        

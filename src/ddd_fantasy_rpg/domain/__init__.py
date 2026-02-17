@@ -6,6 +6,7 @@ from .expedition import (
     Expedition,
     ExpeditionDistance,
     ExpeditionEvent,
+    ExpeditionStatus, 
     MonsterEncounter,
     TraderEncounter,
     ResourceGathering,
@@ -17,6 +18,6 @@ __all__ = [
     "Item", "ItemType", "ItemStats", "Rarity",
     "Monster",
     "Battle", "BattleAction", "BattleActionType", "Combatant", "CombatantStats", "CombatantType",
-    "Expedition", "ExpeditionDistance", "ExpeditionEvent",
+    "Expedition", "ExpeditionDistance", "ExpeditionEvent", "ExpeditionStatus", 
     "MonsterEncounter", "TraderEncounter", "ResourceGathering", "PlayerDuelEncounter",
 ]

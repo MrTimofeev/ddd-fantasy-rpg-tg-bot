@@ -8,13 +8,19 @@ from .time_provider import TimeProvider
 
 
 class ExpeditionDistance(Enum):
-    NEAR = ("near", 1) # 10
-    MEDIUM = ("medium", 1) # 20
-    FAR = ("far", 1) # 30
+    NEAR = ("near", 1)  # 10
+    MEDIUM = ("medium", 1)  # 20
+    FAR = ("far", 1)  # 30
 
     def __init__(self, key: str, duration: int):
         self.key = key
         self.duration_minutes = duration
+
+
+class ExpeditionStatus(Enum):
+    ACTIVE = "active"
+    INTERRUPTED = "interrupted"
+    COMPLETED = "completed"
 
 
 class ExpeditionEvent:
@@ -32,14 +38,16 @@ class TraderEncounter(ExpeditionEvent):
     # TODO: На будущее
     pass
 
+
 @dataclass
 class ResourceGathering(ExpeditionEvent):
     resource_type: str
     amount: int
 
+
 @dataclass
 class PlayerDuelEncounter(ExpeditionEvent):
-    opponent_telegram_id: int
+    opponent_player_id: str
 
 
 @dataclass
@@ -48,6 +56,7 @@ class Expedition:
     distance: ExpeditionDistance
     start_time: datetime
     end_time: datetime
+    status: ExpeditionStatus = ExpeditionStatus.ACTIVE
     outcome: Optional[ExpeditionEvent] = None
 
     def __post_init__(self):
@@ -62,11 +71,26 @@ class Expedition:
             player_id=player_id,
             distance=distance,
             start_time=now,
-            end_time=end
+            end_time=end,
+            status=ExpeditionStatus.ACTIVE
         )
 
     def is_finished(self, time_provider: TimeProvider) -> bool:
         return time_provider.now() >= self.end_time
-    
-    def complete_with(self, event: ExpeditionEvent) -> None:
+
+    def interrupt_for_duel(self, opponent_player_id: str) -> None:
+        """Прерывает вылазку для дуэли"""
+        if self.status != ExpeditionStatus.ACTIVE:
+            raise ValueError("Cannot interrupt non-active expedition")
+        self.status = ExpeditionStatus.INTERRUPTED
+        self.outcome = PlayerDuelEncounter(
+            opponent_player_id=opponent_player_id)
+
+    def complete_with_event(self, event: ExpeditionEvent) -> None:
+        """Завершаем вылазку с событие (если не прервана)."""
+        # if self.status == ExpeditionStatus.INTERRUPTED:
+        #     raise ValueError("Expedition already interrupted")
+        
+        self.status = ExpeditionStatus.COMPLETED
         self.outcome = event
+

@@ -40,8 +40,10 @@ class StartBattleUseCase:
         if isinstance(opponent, Monster):
             opponent_combatant = create_combatant_from_monster(opponent)
         else:
-            # TODO: PVP - загрузить другого игрока и создать Combatant
-            raise NotImplementedError("PVP not implemented yet")
+            opponent_player = await self._player_repo.get_by_id(opponent)
+            if not opponent_player:
+                raise ValueError("Oponent player not found")
+            opponent_combatant = create_combatant_from_player(opponent_player)
         
         # 4. Создаем бой
         battle = Battle(player_combatant, opponent_combatant)
