@@ -149,29 +149,31 @@ class Battle:
             self._flee_attempts[fleeing.id] += 1
             return False
 
-    def get_opponent_of(self, combatant_id: str) -> Combatant:
-        if self._attacker.id == combatant_id:
-            return self._defender
-        elif self._defender == combatant_id:
-            return self._attacker
-        else:
-            raise ValueError("Combatant not in this battle")
-
     def is_pvp(self) -> bool:
+        """Проверяет, является ли бой PVP (игрок VS игрок)."""
         return (
             self._attacker.combatant_type == CombatantType.PLAYER and
             self._defender.combatant_type == CombatantType.PLAYER
         )
 
-    def get_combatant_by_id(self, combatant_id: str) -> Combatant:
-        if combatant_id == self._attacker.id:
+    def get_opponent_id(self, combatant_id: str) -> Combatant:
+        """Возвращает ID противника для данного бойца."""
+        if self._attacker.id == combatant_id:
+            return self._defender
+        elif self._defender.id == combatant_id:
             return self._attacker
-        elif combatant_id == self._defender.id:
+        else:
+            raise ValueError("Combatant not in this battle")
+
+    def get_combatant_by_id(self, combatant_id: str) -> Combatant:
+        if self._attacker.id == combatant_id:
+            return self._attacker
+        elif self._defender.id == combatant_id:
             return self._defender
         else:
             raise ValueError("Combatant not in this battle")
 
-    def perform_action(self, acting_combatant_id: str, action: BattleAction, randome_provider: RandomProvider) -> dict:
+    def perform_action(self, acting_combatant_id: str, action: BattleAction, random_provider: RandomProvider) -> dict:
         if self._is_finished:
             raise ValueError("Battle is already finished")
 
@@ -189,14 +191,14 @@ class Battle:
 
         if action.action_type == BattleActionType.ATTACK:
             damage = self._calculate_base_damage(actor)
-            if self._is_critical_hit(actor, opponent, randome_provider):
+            if self._is_critical_hit(actor, opponent, random_provider):
                 damage = int(damage * 1.5)
                 result["details"] = "Critical hit!"
             opponent._take_damage(damage)
             result["damage"] = damage
 
         elif action.action_type == BattleActionType.FLEE:
-            if self._can_flee(actor, opponent, randome_provider):
+            if self._can_flee(actor, opponent, random_provider):
                 result["details"] = "Fled successfully!"
                 self._end_battle(opponent)  # Победитель - тот, кто остался
                 self._current_turn_owner_id = None

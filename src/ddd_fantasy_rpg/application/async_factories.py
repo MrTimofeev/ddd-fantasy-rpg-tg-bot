@@ -6,6 +6,9 @@ from ddd_fantasy_rpg.application import (
     StartBattleUseCase,
     CompleteExpeditionUseCase,
     CompleteBattleUseCase,
+    GetActiveExpeditionUseCase,
+    MatchPvpExpeditionsUseCase,
+    PerformBattleActionUseCase,
 )
 from ddd_fantasy_rpg.infrastructure.repositories import (
     AsyncPlayerRepository,
@@ -18,6 +21,7 @@ def create_async_use_cases(session: AsyncSession):
     player_repo = AsyncPlayerRepository(session)
     exp_repo = AsyncExpeditionRepository(session)
     battle_repo = AsyncBattleRepository(session)
+    
 
     time_provider = UtcTimeProvider()
     random_provider = SystemRandomProvider()
@@ -32,13 +36,16 @@ def create_async_use_cases(session: AsyncSession):
         random_provider
     )
     complete_battle_uc = CompleteBattleUseCase(player_repo, battle_repo, exp_repo)
+    get_active_exp_uc = GetActiveExpeditionUseCase(exp_repo)
+    match_pvp_uc = MatchPvpExpeditionsUseCase(exp_repo, player_repo, start_battle_uc)
+    perform_battle_action_uc = PerformBattleActionUseCase(random_provider, battle_repo, complete_battle_uc)
 
     return {
         "start_expedition": start_exp_uc,
         "complete_expedition": complete_exp_uc,
         "start_battle": start_battle_uc,
         "complete_battle": complete_battle_uc,
-        "player_repo": player_repo,
-        "exp_repo": exp_repo,
-        "battle_repo": battle_repo,
+        "get_active_expeditions": get_active_exp_uc,
+        "match_pvp_expeditions": match_pvp_uc,
+        "perform_battle_action": perform_battle_action_uc,
     }
