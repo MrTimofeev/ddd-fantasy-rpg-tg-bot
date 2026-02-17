@@ -10,7 +10,7 @@ from aiogram.enums import ParseMode
 
 from ddd_fantasy_rpg.bot.aiogram_bot.handlers import register_handlers
 from ddd_fantasy_rpg.infrastructure.database.async_session import get_async_sessionmaker
-from ddd_fantasy_rpg.bot.aiogram_bot.background_tasks import check_completed_expeditions
+from ddd_fantasy_rpg.bot.aiogram_bot.background_tasks import check_completed_expeditions, match_active_expeditions_for_pvp
 
 
 logging.basicConfig(level=logging.INFO)
@@ -41,6 +41,7 @@ async def main():
 
     # Запуск фоновой задачи
     asyncio.create_task(check_completed_expeditions(bot, async_session_maker))
+    asyncio.create_task(match_active_expeditions_for_pvp(bot, async_session_maker))
 
     await dp.start_polling(bot)
 
