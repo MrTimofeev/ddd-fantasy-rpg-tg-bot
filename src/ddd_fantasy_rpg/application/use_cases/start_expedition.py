@@ -9,6 +9,9 @@ from ddd_fantasy_rpg.domain.repositories.expedition_repository import Expedition
 
 
 class StartExpeditionUseCase:
+    """
+    Use Case для старта экспедиции.
+    """
     def __init__(
         self,
         player_repository: PlayerRepository,

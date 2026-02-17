@@ -5,6 +5,9 @@ from ddd_fantasy_rpg.domain.repositories.expedition_repository import Expedition
 
 
 class CompleteBattleUseCase:
+    """
+    Use Case для заверешния битвы. 
+    """
     def __init__(
         self,
         player_repository: PlayerRepository,

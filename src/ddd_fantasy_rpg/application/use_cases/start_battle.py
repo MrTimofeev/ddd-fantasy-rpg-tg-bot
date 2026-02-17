@@ -11,6 +11,9 @@ from ddd_fantasy_rpg.domain.battle import Battle
 
 
 class StartBattleUseCase:
+    """
+    Use Case для старта битвы
+    """
     def __init__(
         self,
         player_repository: PlayerRepository,

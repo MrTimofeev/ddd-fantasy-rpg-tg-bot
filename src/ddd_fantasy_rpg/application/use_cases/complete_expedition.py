@@ -8,6 +8,9 @@ from ddd_fantasy_rpg.application.use_cases.start_battle import StartBattleUseCas
 
 
 class CompleteExpeditionUseCase:
+    """
+    Use Case для завершения экспедиции.
+    """
     def __init__(
         self,
         expedition_repository: ExpeditionRepository,
