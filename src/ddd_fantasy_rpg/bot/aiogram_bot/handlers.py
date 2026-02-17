@@ -32,7 +32,7 @@ async def cmd_create_player(message: Message, async_session_maker):
             telegram_id=user.id,
             name=user.first_name,
             race=Race.HUMAN,
-            player_class=PlayerClass.WARRIOR,
+            player_profession=PlayerClass.WARRIOR,
         )
         
         await player_repo.save(player)

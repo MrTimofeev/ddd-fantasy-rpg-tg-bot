@@ -25,26 +25,58 @@ class Player:
         telegram_id: int,
         name: str,
         race: Race,
-        player_class: PlayerClass,
+        player_profession: PlayerClass,
     ):
         if not name.strip():
             raise ValueError("Player name cannot be empty")
         if race not in Race:
             raise ValueError("Invalid race")
-        if player_class not in PlayerClass:
+        if player_profession not in PlayerClass:
             raise ValueError("Invalid class")
 
         self._id = player_id
         self._telegram_id = telegram_id
         self._name = name.strip()
         self._race = race
-        self._class = player_class
+        self._profession = player_profession
         self._level = 1
         self._exp = 0
         self._inventory: List[Item] = []
         self._equipped: dict[str, Item] = {}  # например: {"weapon": item}
 
         self._base_stats = self._calculate_base_stats()
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def telegram_id(self) -> int:
+        return self._telegram_id
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def race(self) -> Race:
+        return self._race
+
+    @property
+    def profession(self) -> PlayerClass:
+        return self._profession
+
+    @property
+    def level(self) -> int:
+        return self._level
+    
+    @property
+    def exp(self) -> int:
+        return self._exp
+
+    @property
+    def inventory(self) -> List[Item]:
+        return self._inventory.copy()
 
     def _calculate_base_stats(self) -> dict:
         """ Базовые статы в зависимости от рассы и класса."""
@@ -54,22 +86,11 @@ class Player:
         if self._race == Race.ORC:
             stats["strength"] += 3
 
-        if self._class == PlayerClass.WARRIOR:
+        if self._profession == PlayerClass.WARRIOR:
             stats["strength"] += 2
 
         return stats
 
-    @property
-    def id(self) -> str:
-        return self._id
-
-    @property
-    def level(self) -> int:
-        return self._level
-
-    @property
-    def inventory(self) -> List[Item]:
-        return self._inventory.copy()
     def add_item(self, item: Item) -> None:
         """ Добавить предмет в инвентарь"""
         self._inventory.append(item)
@@ -102,7 +123,6 @@ class Player:
         """Обрабатываем смерт игрока."""
         self._inventory.clear()
         # TODO: установить флаг смерти, время воскрешения и т.д.
-        
-    
+
     def __repr__(self) -> str:
         return f"<Player id={self._id} name={self._name} level={self._level}>"

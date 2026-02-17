@@ -56,7 +56,7 @@ def player_to_orm(player: Player) -> PlayerORM:
         telegram_id=player._telegram_id,
         name=player._name,
         race=player._race.value,
-        player_class=player._class.value,
+        player_profession=player._profession.value,
         level=player._level,
         exp=player._exp,
         inventory=inventory_data,
@@ -77,7 +77,7 @@ def player_from_orm(orm: PlayerORM) -> Player:
     player._telegram_id = orm.telegram_id
     player._name = orm.name
     player._race = Race(orm.race)
-    player._class = PlayerClass(orm.player_class)
+    player._profession = PlayerClass(orm.player_profession)
     player._level = orm.level
     player._exp = orm.exp
     player._inventory = inventory

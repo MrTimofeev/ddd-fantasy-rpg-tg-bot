@@ -91,7 +91,7 @@ class CompleteBattleUseCase:
         if loser_player:
             exp_loser = await self._exp_repo.get_by_player_id(loser_player.id)
             if not exp_loser:
-                raise ValueError("Expedition for loser not foun")
+                raise ValueError("Expedition for loser not found")
             
             exp_loser.complete_with_event(PlayerDuelEncounter(loser_player.id))
             await self._exp_repo.save(exp_loser)

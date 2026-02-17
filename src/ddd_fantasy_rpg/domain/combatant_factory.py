@@ -13,14 +13,14 @@ def create_combatant_from_player(player: Player) -> Combatant:
     max_hp = 50 + (player.level * 10)
 
     skills = []
-    if player._class == PlayerClass.WARRIOR:
+    if player._profession == PlayerClass.WARRIOR:
         skills = [
             Skill("Cleave", SkillType.DAMAGE,
                   base_power=15, cooldown_turns=2),
             Skill("Battle Cry", SkillType.BUFF,
                   base_power=5, cooldown_turns=4),
         ]
-    elif player._class == PlayerClass.MAGE:
+    elif player._profession == PlayerClass.MAGE:
         skills = [
             Skill("Fireball", SkillType.DAMAGE,
                   base_power=20, cooldown_turns=3),

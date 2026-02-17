@@ -14,7 +14,7 @@ class PlayerORM(Base):
     telegram_id = Column(Integer, unique=True, nullable=False)
     name = Column(String, nullable=False)
     race = Column(String, nullable=False)
-    player_class = Column(String, nullable=False)
+    player_profession = Column(String, nullable=False)
     level = Column(Integer, default=1)
     exp = Column(Integer, default=0)
     inventory = Column(JSON, default=list)

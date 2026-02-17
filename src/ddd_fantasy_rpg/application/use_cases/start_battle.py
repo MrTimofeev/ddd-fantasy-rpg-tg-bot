@@ -32,7 +32,7 @@ class StartBattleUseCase:
         # 2. Проверяем, нет ли активного боя
         active_battle = await self._battle_repo.get_active_battle_for_player(player_id)
         if active_battle:
-            raise ValueError("Player is alredy in battle")
+            raise ValueError("Player is already in battle")
         
         # 3. Создаем Combatan'ов
         player_combatant = create_combatant_from_player(player)
@@ -42,7 +42,7 @@ class StartBattleUseCase:
         else:
             opponent_player = await self._player_repo.get_by_id(opponent)
             if not opponent_player:
-                raise ValueError("Oponent player not found")
+                raise ValueError("Opponent player not found")
             opponent_combatant = create_combatant_from_player(opponent_player)
         
         # 4. Создаем бой

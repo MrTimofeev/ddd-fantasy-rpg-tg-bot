@@ -59,8 +59,8 @@ async def handle_battle_action(callback: CallbackQuery, async_session_maker):
             # === 2. Проверяем закончился ли бой после хода игрока ===
             if battle.is_finished:
                 
-                compplete_battle_uc = use_cases['complete_battle']
-                battle_outcome = await compplete_battle_uc.execute(battle)
+                complete_battle_uc = use_cases['complete_battle']
+                battle_outcome = await complete_battle_uc.execute(battle)
                 
                 await callback.bot.send_message(battle._attacker.id, response)
                 if battle._defender.combatant_type != CombatantType.MONSTER:

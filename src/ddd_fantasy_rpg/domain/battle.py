@@ -27,45 +27,45 @@ class Combatant:
     stats: CombatantStats
     skills: List[Skill] = field(default_factory=list)
     _current_hp: int = field(default=None)
-    _skill_colldowns: Dict[str, int] = field(init=False, default_factory=dict)
+    _skill_cooldowns: Dict[str, int] = field(init=False, default_factory=dict)
 
     def __post_init__(self):
         # Если HP не задан - используем max_hp
         if self._current_hp is None:
             self._current_hp = self.stats.max_hp
-        
+
         # Ограничиваем HP диапозоном [0, max_hp]
         if self._current_hp > self.stats.max_hp:
             self._current_hp = self.stats.max_hp
         if self.current_hp < 0:
             self._current_hp = 0
 
-        self._skill_colldowns = {skill.name: 0 for skill in self.skills}
-    
+        self._skill_cooldowns = {skill.name: 0 for skill in self.skills}
+
     @property
     def current_hp(self):
         return self._current_hp
-    
+
     @property
     def is_alive(self) -> bool:
         return self.current_hp > 0
 
     @property
     def available_skills(self) -> List[Skill]:
-        return [s for s in self.skills if self._skill_colldowns[s.name] == 0]
+        return [s for s in self.skills if self._skill_cooldowns[s.name] == 0]
 
     def _take_damage(self, damage: int) -> None:
         self._current_hp = max(0, self._current_hp - damage)
 
     def _use_skill(self, skill_name: str) -> dict:
-        if skill_name not in self._skill_colldowns:
+        if skill_name not in self._skill_cooldowns:
             raise ValueError(
                 f"Skill '{skill_name}' is not available to this combatant")
-        if self._skill_colldowns[skill_name] > 0:
+        if self._skill_cooldowns[skill_name] > 0:
             raise ValueError(f"Skill '{skill_name}' is on cooldown")
 
         skill = next(s for s in self.skills if s.name == skill_name)
-        self._skill_colldowns[skill_name] = skill.cooldown_turns
+        self._skill_cooldowns[skill_name] = skill.cooldown_turns
         return {
             "skill": skill,
             "effect_value": self._calculate_skill_effect(skill)
@@ -82,9 +82,9 @@ class Combatant:
 
     def _reduce_colldowns(self) -> None:
         """Уменьшает все активные coldown'ы на 1"""
-        for name in self._skill_colldowns:
-            if self._skill_colldowns[name] > 0:
-                self._skill_colldowns[name] -= 1
+        for name in self._skill_cooldowns:
+            if self._skill_cooldowns[name] > 0:
+                self._skill_cooldowns[name] -= 1
 
 
 class BattleActionType(Enum):
@@ -120,14 +120,6 @@ class Battle:
     def winner(self) -> Optional[Combatant]:
         return self._winner
 
-    def get_combatant_by_id(self, combatant_id: str) -> Combatant:
-        if combatant_id == self._attacker.id:
-            return self._attacker
-        elif combatant_id == self._defender.id:
-            return self._defender
-        else:
-            raise ValueError("Combatant not in this battle")
-
     def _end_battle(self, winner: Combatant) -> None:
         self._is_finished = True
         self._winner = winner
@@ -150,12 +142,34 @@ class Battle:
         base_chance = 0.3 + (attemps * 0.2)  # 30% 40% 70%
         agility_factor = fleeing.stats.agility / (opponent.stats.agility + 1)
         total_chance = min(base_chance * agility_factor, 0.9)
-        success =  randome_provider.random() < total_chance
+        success = randome_provider.random() < total_chance
         if success:
             return True
         else:
             self._flee_attempts[fleeing.id] += 1
             return False
+
+    def get_opponent_of(self, combatant_id: str) -> Combatant:
+        if self._attacker.id == combatant_id:
+            return self._defender
+        elif self._defender == combatant_id:
+            return self._attacker
+        else:
+            raise ValueError("Combatant not in this battle")
+
+    def is_pvp(self) -> bool:
+        return (
+            self._attacker.combatant_type == CombatantType.PLAYER and
+            self._defender.combatant_type == CombatantType.PLAYER
+        )
+
+    def get_combatant_by_id(self, combatant_id: str) -> Combatant:
+        if combatant_id == self._attacker.id:
+            return self._attacker
+        elif combatant_id == self._defender.id:
+            return self._defender
+        else:
+            raise ValueError("Combatant not in this battle")
 
     def perform_action(self, acting_combatant_id: str, action: BattleAction, randome_provider: RandomProvider) -> dict:
         if self._is_finished:
