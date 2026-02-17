@@ -30,6 +30,7 @@ class ExpeditionORM(Base):
     end_time = Column(DateTime, nullable=False)
     outcome_type = Column(String, nullable=True)
     outcome_data = Column(JSON, nullable=True)
+    status = Column(String, default="active", nullable=True)
 
 
 class BattleORM(Base):
