@@ -4,6 +4,7 @@ from ddd_fantasy_rpg.domain.random_provider import RandomProvider
 from ddd_fantasy_rpg.domain.battle import Battle, BattleAction, BattleActionType, CombatantType
 from ddd_fantasy_rpg.domain.repositories.battle_repository import BattleRepository
 from ddd_fantasy_rpg.application.use_cases.complete_battle import CompleteBattleUseCase
+from ddd_fantasy_rpg.domain.exceptions import BattleNotFoundError, BattleAlreadyFinishedError
 
 
 class BattleActionResult:
@@ -47,11 +48,11 @@ class PerformBattleActionUseCase:
         # 1. Получаем активный бой
         battle = await self._battle_repo.get_active_battle_for_player(player_id)
         if not battle:
-            raise ValueError("Active battle not found for player")
+            raise BattleNotFoundError(player_id)
         
         # 2. Проверяем, что бой еще не завершен
         if battle.is_finished:
-            raise ValueError("Battle is already finisjed")
+            raise BattleAlreadyFinishedError()
         
         # 3. Выпоолняем действие игрока
         result = battle.perform_action(player_id, action, self._random_provider)

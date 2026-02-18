@@ -2,6 +2,7 @@ from enum import Enum
 from typing import List
 
 from .item import Item, ItemType
+from .exceptions import CannotEquipItemError
 
 
 class Race(Enum):
@@ -108,7 +109,7 @@ class Player:
         }
 
         if item.item_type not in slot_map:
-            raise ValueError(f"Cannot equip item of type {item.item_type}")
+            raise CannotEquipItemError(item.item_type.value)
 
         slot = slot_map[item.item_type]
         self._equipped[slot] = item

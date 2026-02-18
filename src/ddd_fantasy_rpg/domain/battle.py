@@ -5,6 +5,15 @@ from typing import Dict, Optional, List
 from .skill import Skill, SkillType
 from .random_provider import RandomProvider
 
+from .exceptions import (
+    SkillNotAvailableError,
+    SkillOnCooldownError,
+    CombatantNotAliveError,
+    CombatantNotInBattleError,
+    NotYourTurnError,
+    BattleAlreadyFinishedError,
+)
+
 
 class CombatantType(Enum):
     PLAYER = "player"
@@ -59,10 +68,9 @@ class Combatant:
 
     def _use_skill(self, skill_name: str) -> dict:
         if skill_name not in self._skill_cooldowns:
-            raise ValueError(
-                f"Skill '{skill_name}' is not available to this combatant")
+            raise SkillNotAvailableError(skill_name)
         if self._skill_cooldowns[skill_name] > 0:
-            raise ValueError(f"Skill '{skill_name}' is on cooldown")
+            raise SkillOnCooldownError(skill_name)
 
         skill = next(s for s in self.skills if s.name == skill_name)
         self._skill_cooldowns[skill_name] = skill.cooldown_turns
@@ -104,7 +112,7 @@ class BattleAction:
 class Battle:
     def __init__(self, attacker: Combatant, defender: Combatant):
         if not attacker.is_alive or not defender.is_alive:
-            raise ValueError("Both combatants must be alive to start a battle")
+            raise CombatantNotAliveError()
         self._attacker = attacker
         self._defender = defender
         self._current_turn_owner_id = attacker.id
@@ -163,7 +171,7 @@ class Battle:
         elif self._defender.id == combatant_id:
             return self._attacker
         else:
-            raise ValueError("Combatant not in this battle")
+            raise CombatantNotInBattleError()
 
     def get_combatant_by_id(self, combatant_id: str) -> Combatant:
         if self._attacker.id == combatant_id:
@@ -171,14 +179,14 @@ class Battle:
         elif self._defender.id == combatant_id:
             return self._defender
         else:
-            raise ValueError("Combatant not in this battle")
+            raise CombatantNotInBattleError()
 
     def perform_action(self, acting_combatant_id: str, action: BattleAction, random_provider: RandomProvider) -> dict:
         if self._is_finished:
-            raise ValueError("Battle is already finished")
+            raise BattleAlreadyFinishedError()
 
         if acting_combatant_id != self._current_turn_owner_id:
-            raise ValueError("Not your turn")
+            raise NotYourTurnError()
 
         actor = self.get_combatant_by_id(acting_combatant_id)
         opponent = self._defender if actor.id == self._attacker.id else self._attacker

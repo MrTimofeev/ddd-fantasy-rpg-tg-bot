@@ -5,6 +5,7 @@ from typing import Optional
 
 from .monster import Monster
 from .time_provider import TimeProvider
+from .exceptions import ExpeditionNotActiveError
 
 
 class ExpeditionDistance(Enum):
@@ -81,7 +82,7 @@ class Expedition:
     def interrupt_for_duel(self, opponent_player_id: str) -> None:
         """Прерывает вылазку для дуэли"""
         if self.status != ExpeditionStatus.ACTIVE:
-            raise ValueError("Cannot interrupt non-active expedition")
+            raise ExpeditionNotActiveError()
         self.status = ExpeditionStatus.INTERRUPTED
         self.outcome = PlayerDuelEncounter(
             opponent_player_id=opponent_player_id)

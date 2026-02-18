@@ -1,11 +1,10 @@
-from datetime import datetime
-from typing import Optional
-
 from ddd_fantasy_rpg.domain.expedition import Expedition, ExpeditionDistance
 from ddd_fantasy_rpg.domain.time_provider import TimeProvider
 
 from ddd_fantasy_rpg.domain.repositories.player_repository import PlayerRepository
 from ddd_fantasy_rpg.domain.repositories.expedition_repository import ExpeditionRepository
+
+from ddd_fantasy_rpg.domain.exceptions import PlayerNotFoundError, PlayerAlreadyOnExpeditionError
 
 
 class StartExpeditionUseCase:
@@ -26,11 +25,11 @@ class StartExpeditionUseCase:
     async def execute(self, player_id: str, distance: ExpeditionDistance) -> Expedition:
         player = await self._player_repo.get_by_id(player_id)
         if player is None:
-            raise ValueError(f"Player with ID {player_id} not found")
+            raise PlayerNotFoundError(player_id)
         
         active_expedition = await self._expedition_repo.get_by_player_id(player_id)
         if active_expedition and not active_expedition.is_finished(self._time_provider):
-            raise ValueError("Player is already on an expedition")
+            raise PlayerAlreadyOnExpeditionError(player_id)
         
         expedition = Expedition.start_for(
             player_id=player_id,

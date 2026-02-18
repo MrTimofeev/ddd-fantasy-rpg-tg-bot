@@ -55,7 +55,7 @@ class MatchPvpExpeditionsUseCase:
         players = await self._load_players(player_ids)
 
         # 3. Фильтруем валидные пары (экспедиция + игрок)
-        valid_pairs: List[Tuple[Exception, Player]] = []
+        valid_pairs: List[Tuple[Expedition, Player]] = []
         for exp in active_expeditions:
             if exp.player_id in players:
                 valid_pairs.append((exp, players[exp.player_id]))

@@ -5,12 +5,14 @@ from ddd_fantasy_rpg.domain.repositories.expedition_repository import Expedition
 from ddd_fantasy_rpg.domain.repositories.player_repository import PlayerRepository
 from ddd_fantasy_rpg.domain.expedition_event_generator import generate_event_for_expedition
 from ddd_fantasy_rpg.application.use_cases.start_battle import StartBattleUseCase
+from ddd_fantasy_rpg.domain.exceptions import ExpeditionNotFoundError, ExpeditionNotFinishedError
 
 
 class CompleteExpeditionUseCase:
     """
     Use Case для завершения экспедиции.
     """
+
     def __init__(
         self,
         expedition_repository: ExpeditionRepository,
@@ -29,9 +31,9 @@ class CompleteExpeditionUseCase:
         # 1. Получаем активную вылазку
         expedition = await self._expedition_repo.get_by_player_id(player_id)
         if not expedition:
-            raise ValueError("No active expedition found")
+            raise ExpeditionNotFoundError(player_id)
         if not expedition.is_finished(self._time_provider):
-            raise ValueError("Expedition is not finished yet")
+            raise ExpeditionNotFinishedError()
 
         if expedition.status == ExpeditionStatus.INTERRUPTED:
             # Уже есьт событие дуэли

@@ -1,13 +1,14 @@
 from typing import Union
 
-from ddd_fantasy_rpg.domain import Player, Monster
+from ddd_fantasy_rpg.domain import Monster, Battle
 from ddd_fantasy_rpg.domain.repositories.player_repository import PlayerRepository
 from ddd_fantasy_rpg.domain.repositories.battle_repository import BattleRepository
 from ddd_fantasy_rpg.domain.combatant_factory import (
     create_combatant_from_player,
     create_combatant_from_monster,
 )
-from ddd_fantasy_rpg.domain.battle import Battle
+
+from ddd_fantasy_rpg.domain.exceptions import PlayerNotFoundError, PlayerAlreadyInBattleError
 
 
 class StartBattleUseCase:
@@ -30,12 +31,12 @@ class StartBattleUseCase:
         # 1. Загружаем игрока
         player = await self._player_repo.get_by_id(player_id)
         if not player:
-            raise ValueError(f"Player {player_id} not found")
+            raise PlayerNotFoundError(player_id)
         
         # 2. Проверяем, нет ли активного боя
         active_battle = await self._battle_repo.get_active_battle_for_player(player_id)
         if active_battle:
-            raise ValueError("Player is already in battle")
+            raise PlayerAlreadyInBattleError(player_id)
         
         # 3. Создаем Combatan'ов
         player_combatant = create_combatant_from_player(player)
