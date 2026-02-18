@@ -27,6 +27,11 @@ class PlayerAlreadyOnExpeditionError(DomainError):
         self.player_id = player_id
         super().__init__(f"Player {player_id} is already on an expedition")
 
+class PlayerAlreadyExistingError(DomainError):
+    """Игрок уже существует."""
+    def __ini__(self, player_id: str):
+        self.player_id = player_id
+        super().__init__(f"Player with ID {player_id} already exists")
 
 # === Expedition ===
 class ExpeditionNotFoundError(DomainError):
