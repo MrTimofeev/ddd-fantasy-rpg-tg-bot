@@ -1,7 +1,5 @@
+from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.domain import Battle, CombatantType, PlayerDuelEncounter
-from ddd_fantasy_rpg.domain.repositories.player_repository import PlayerRepository
-from ddd_fantasy_rpg.domain.repositories.battle_repository import BattleRepository
-from ddd_fantasy_rpg.domain.repositories.expedition_repository import ExpeditionRepository
 from ddd_fantasy_rpg.domain.exceptions import BattleAlreadyFinishedError, ExpeditionNotFoundError, PlayerNotFoundError
 
 
@@ -10,17 +8,8 @@ class CompleteBattleUseCase:
     """
     Use Case для заверешния битвы. 
     """
-    def __init__(
-        self,
-        player_repository: PlayerRepository,
-        battle_repository: BattleRepository,
-        expedition_repository: ExpeditionRepository,
-    ):
-        self._player_repo = player_repository
-        self._exp_repo = expedition_repository
-        self._battle_repo = battle_repository
 
-    async def execute(self, battle: Battle) -> dict:
+    async def execute(self, battle: Battle, uow: UnitOfWork) -> dict:
         """Завершает бой и возвращает результат."""
         if not battle.is_finished:
             raise BattleAlreadyFinishedError()
@@ -41,7 +30,7 @@ class CompleteBattleUseCase:
         # Загружаем победителя (если это игрок)
         winner_player = None
         if winner.combatant_type == CombatantType.PLAYER:
-            winner_player = await self._player_repo.get_by_id(winner.id)
+            winner_player = await uow.players.get_by_id(winner.id)
             if not winner_player:
                 raise PlayerNotFoundError(winner.id)
             result["winner"] = "player"
@@ -53,7 +42,7 @@ class CompleteBattleUseCase:
         # Загружаем проигравшего (если это игрок)
         loser_player = None
         if loser.combatant_type == CombatantType.PLAYER:
-            loser_player = await self._player_repo.get_by_id(loser.id)
+            loser_player = await uow.players.get_by_id(loser.id)
             if not loser_player:
                 raise PlayerNotFoundError(loser.id)
             result["is_pvp"] = (winner.combatant_type == CombatantType.PLAYER)
@@ -76,31 +65,31 @@ class CompleteBattleUseCase:
                 # Очищаем инвентарь проигравшего
                 loser_player.die()  
 
-            await self._player_repo.save(winner_player)
+            await uow.players.save(winner_player)
 
         # === Обработка смерти игрока (проигрыш от монстра) ===
         if result["player_died"] and loser_player:
             # Игрок умирает от монстра — теряет инвентарь
             loser_player.die()
-            await self._player_repo.save(loser_player)
+            await uow.players.save(loser_player)
 
         if winner_player:
-            exp_winer = await self._exp_repo.get_by_player_id(winner_player.id)
+            exp_winer = await uow.expeditions.get_by_player_id(winner_player.id)
             if not exp_winer:
                 raise ExpeditionNotFoundError(winner_player.id)
             
             exp_winer.complete_with_event(PlayerDuelEncounter(winner_player.id))
-            await self._exp_repo.save(exp_winer)
+            await uow.expeditions.save(exp_winer)
         
         
         if loser_player:
-            exp_loser = await self._exp_repo.get_by_player_id(loser_player.id)
+            exp_loser = await uow.expeditions.get_by_player_id(loser_player.id)
             if not exp_loser:
                 raise ExpeditionNotFoundError(loser_player.id)
             
             exp_loser.complete_with_event(PlayerDuelEncounter(loser_player.id))
-            await self._exp_repo.save(exp_loser)
+            await uow.expeditions.save(exp_loser)
         
         
-        await self._battle_repo.save(battle)
+        await uow.battles.save(battle)
         return result

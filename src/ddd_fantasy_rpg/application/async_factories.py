@@ -9,36 +9,26 @@ from ddd_fantasy_rpg.application import (
     GetActiveExpeditionUseCase,
     MatchPvpExpeditionsUseCase,
     PerformBattleActionUseCase,
-)
-from ddd_fantasy_rpg.infrastructure.repositories import (
-    AsyncPlayerRepository,
-    AsyncExpeditionRepository,
-    AsyncBattleRepository,
+    CreatePlayerUseCase,
 )
 
 
-def create_async_use_cases(session: AsyncSession):
-    player_repo = AsyncPlayerRepository(session)
-    exp_repo = AsyncExpeditionRepository(session)
-    battle_repo = AsyncBattleRepository(session)
-    
-
+def create_async_use_cases():
     time_provider = UtcTimeProvider()
     random_provider = SystemRandomProvider()
 
-    start_battle_uc = StartBattleUseCase(player_repo, battle_repo)
-    start_exp_uc = StartExpeditionUseCase(player_repo, exp_repo, time_provider)
+    start_battle_uc = StartBattleUseCase()
+    start_exp_uc = StartExpeditionUseCase( time_provider)
     complete_exp_uc = CompleteExpeditionUseCase(
-        exp_repo,
-        player_repo,
         start_battle_uc,
         time_provider,
         random_provider
     )
-    complete_battle_uc = CompleteBattleUseCase(player_repo, battle_repo, exp_repo)
-    get_active_exp_uc = GetActiveExpeditionUseCase(exp_repo)
-    match_pvp_uc = MatchPvpExpeditionsUseCase(exp_repo, player_repo, start_battle_uc)
-    perform_battle_action_uc = PerformBattleActionUseCase(random_provider, battle_repo, complete_battle_uc)
+    complete_battle_uc = CompleteBattleUseCase()
+    get_active_exp_uc = GetActiveExpeditionUseCase()
+    match_pvp_uc = MatchPvpExpeditionsUseCase(start_battle_uc)
+    perform_battle_action_uc = PerformBattleActionUseCase(random_provider, complete_battle_uc)
+    create_player_uc = CreatePlayerUseCase()
 
     return {
         "start_expedition": start_exp_uc,
@@ -48,4 +38,5 @@ def create_async_use_cases(session: AsyncSession):
         "get_active_expeditions": get_active_exp_uc,
         "match_pvp_expeditions": match_pvp_uc,
         "perform_battle_action": perform_battle_action_uc,
+        "create_player": create_player_uc,
     }

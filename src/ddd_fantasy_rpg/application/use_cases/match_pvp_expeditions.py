@@ -1,11 +1,10 @@
 import asyncio
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from collections import defaultdict
 
 from ddd_fantasy_rpg.domain.expedition import Expedition
 from ddd_fantasy_rpg.domain.player import Player
-from ddd_fantasy_rpg.domain.repositories.expedition_repository import ExpeditionRepository
-from ddd_fantasy_rpg.domain.repositories.player_repository import PlayerRepository
+from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.application.use_cases.start_battle import StartBattleUseCase
 
 
@@ -30,29 +29,22 @@ class MatchPvpExpeditionsUseCase:
     Use Case для матчинга PVP-дуэлей между игроками в активных экспедициях.
     """
 
-    def __init__(
-        self,
-        expedition_repository: ExpeditionRepository,
-        player_repository: PlayerRepository,
-        start_battle_use_case: StartBattleUseCase,
-    ):
-        self._exp_repo = expedition_repository
-        self._player_repo = player_repository
+    def __init__(self, start_battle_use_case: StartBattleUseCase):
         self._start_battle_uc = start_battle_use_case
 
-    async def execute(self) -> List[PvpMatchResult]:
+    async def execute(self, uow: UnitOfWork) -> List[PvpMatchResult]:
         """
         Выполняет матчинг PVP-дуэлей и возвращает результат.
         Все изменения (прерывания экспедиций, запуск боев) сохраняются здесь.
         """
         # 1. Получаем все активные экспедиции
-        active_expeditions = await self._exp_repo.get_active_expeditions()
+        active_expeditions = await uow.expeditions.get_active_expeditions()
         if len(active_expeditions) < 2:
             return []
 
         # 2. Загружаем игроков
         player_ids = [exp.player_id for exp in active_expeditions]
-        players = await self._load_players(player_ids)
+        players = await self._load_players(player_ids, uow)
 
         # 3. Фильтруем валидные пары (экспедиция + игрок)
         valid_pairs: List[Tuple[Expedition, Player]] = []
@@ -96,12 +88,12 @@ class MatchPvpExpeditionsUseCase:
                         exp2.interrupt_for_duel(p1.id)
 
                         # сохраняем экспедиции
-                        await self._exp_repo.save(exp1)
-                        await self._exp_repo.save(exp2)
+                        await uow.expeditions.save(exp1)
+                        await uow.expeditions.save(exp2)
 
                         # TODO: убрать это и сделать запуск боя по окончании экспедиции у ближайшего конца экспедиции у игроков
                         # запускаем бой
-                        await self._start_battle_uc.execute(p1.id, p2.id)
+                        await self._start_battle_uc.execute(p1.id, p2.id, uow)
 
                         # Сохряняем результат
                         matched_results.append(
@@ -119,9 +111,9 @@ class MatchPvpExpeditionsUseCase:
 
         return matched_results
 
-    async def _load_players(self, player_ids: List[str]) -> dict[str, Player]:
+    async def _load_players(self, player_ids: List[str], uow: UnitOfWork) -> dict[str, Player]:
         """Загружает игроков и фильтрует успешные загрузки."""
-        player_tasks = [self._player_repo.get_by_id(pid) for pid in player_ids]
+        player_tasks = [uow.players.get_by_id(pid) for pid in player_ids]
         players_raw = await asyncio.gather(*player_tasks, return_exceptions=True)
 
         playsers = {}

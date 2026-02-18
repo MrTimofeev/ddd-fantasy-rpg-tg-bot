@@ -1,8 +1,7 @@
 from typing import List
 
 from ddd_fantasy_rpg.domain.expedition import Expedition
-from ddd_fantasy_rpg.domain.repositories.expedition_repository import ExpeditionRepository
-
+from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
 
 class GetActiveExpeditionUseCase:
     """
@@ -10,12 +9,11 @@ class GetActiveExpeditionUseCase:
     Используется в фоновых задачах.
     """
     
-    def __init__(self, expedition_repository: ExpeditionRepository):
-        self._expedition_repo = expedition_repository
+   
         
-    async def execute(self) -> List[Expedition]:
+    async def execute(self, uow: UnitOfWork) -> List[Expedition]:
         """
         Возвращает все активные (не завершенные) экспедиции.
         """
         
-        return await self._expedition_repo.get_all_active_expeditions()
+        return await uow.expeditions.get_all_active_expeditions()
