@@ -5,6 +5,7 @@ from .use_cases.complete_battle import CompleteBattleUseCase
 from .use_cases.get_active_expeditions import GetActiveExpeditionUseCase
 from .use_cases.match_pvp_expeditions import MatchPvpExpeditionsUseCase
 from .use_cases.perform_battle_action import PerformBattleActionUseCase
+from .use_cases.create_player import CreatePlayerUseCase
 
 __all__ = [
     "StartExpeditionUseCase",
@@ -14,4 +15,5 @@ __all__ = [
     "GetActiveExpeditionUseCase",
     "MatchPvpExpeditionsUseCase",
     "PerformBattleActionUseCase",
+    "CreatePlayerUseCase",
 ]
