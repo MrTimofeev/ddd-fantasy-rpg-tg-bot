@@ -10,7 +10,7 @@ from aiogram.enums import ParseMode
 
 from ddd_fantasy_rpg.bot.aiogram_bot.handlers import register_handlers
 from ddd_fantasy_rpg.infrastructure.database.async_session import get_async_sessionmaker
-from ddd_fantasy_rpg.bot.aiogram_bot.factories import create_background_task
+from ddd_fantasy_rpg.application.async_factories import ApplicationFactory
 
 
 logging.basicConfig(level=logging.INFO)
@@ -31,18 +31,25 @@ async def main():
 
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
         parse_mode=ParseMode.HTML))
-    
-    
     dp = Dispatcher()
-
-    # Передаем сессию в middleware
+    
+    app_factory = ApplicationFactory(bot, async_session_maker)
+    background_tasks = app_factory.create_background_tasks()
+    use_cases = app_factory.get_use_cases()
+    serivices = app_factory.get_services()
+    
+    # Передаем сессию и use_case в middleware
     dp["async_session_maker"] = async_session_maker
 
-    register_handlers(dp)
+    dp["create_plyaer_use_case"] = use_cases["create_player"]
+    dp["start_expedition_use_case"] = use_cases["start_expedition"]
+    dp["perform_battle_action_use_case"] = use_cases["perform_battle_action"]
+    
+    dp["notification_service"] = serivices["notification_service"]
 
     
-    background_tasks = create_background_task(bot, async_session_maker)
-    
+    register_handlers(dp)
+
     # Запуск фоновой задачи
     asyncio.create_task(background_tasks["expedition_completion"].run())
     asyncio.create_task(background_tasks["pvp_matching"].run())
