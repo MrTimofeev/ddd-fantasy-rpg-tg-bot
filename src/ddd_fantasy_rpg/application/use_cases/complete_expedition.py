@@ -43,7 +43,7 @@ class CompleteExpeditionUseCase:
         # 3. Если монстр - запускаем бой
         if isinstance(event, MonsterEncounter):
             # TODO: здесь будет либо монстр либо торговец либо ресы добывать
-            await self._start_battle_uc.execute(player_id, event.monster, uow)
+            await self._start_battle_uc.start_pve_battle(player_id, event.monster, uow)
 
         # 4. Сохраняем результат вылазки
         expedition.complete_with_event(event=event)

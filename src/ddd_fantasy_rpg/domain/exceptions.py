@@ -32,6 +32,9 @@ class PlayerAlreadyExistingError(DomainError):
     def __ini__(self, player_id: str):
         self.player_id = player_id
         super().__init__(f"Player with ID {player_id} already exists")
+        
+class SelfDuelError(DomainError):
+    pass
 
 # === Expedition ===
 class ExpeditionNotFoundError(DomainError):

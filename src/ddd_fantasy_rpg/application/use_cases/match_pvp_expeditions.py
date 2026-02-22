@@ -93,7 +93,7 @@ class MatchPvpExpeditionsUseCase:
 
                         # TODO: убрать это и сделать запуск боя по окончании экспедиции у ближайшего конца экспедиции у игроков
                         # запускаем бой
-                        await self._start_battle_uc.execute(p1.id, p2.id, uow)
+                        await self._start_battle_uc.start_pvp_battle(p1.id, p2.id, uow)
 
                         # Сохряняем результат
                         matched_results.append(
