@@ -1,81 +1,90 @@
 import asyncio
 from aiogram import Bot
 
-from ddd_fantasy_rpg.application.async_factories import create_async_use_cases
-from ddd_fantasy_rpg.bot.aiogram_bot.keyboards import get_battle_keyboard
+from ddd_fantasy_rpg.application.use_cases.complete_expedition import CompleteExpeditionUseCase
+from ddd_fantasy_rpg.application.use_cases.get_active_expeditions import GetActiveExpeditionUseCase
+from ddd_fantasy_rpg.application.use_cases.match_pvp_expeditions import MatchPvpExpeditionsUseCase
 from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
+from ddd_fantasy_rpg.domain.notifications import NotificationService
+from ddd_fantasy_rpg.domain.expedition import MonsterEncounter
+from ddd_fantasy_rpg.domain.exceptions import ExpeditionNotFinishedError
 
 
-async def check_completed_expeditions(bot: Bot, async_session_maker: callable):
+class ExpeditionCompletionBackgroundTask:
     """
     Фоновая задача: каждые 30 сек проверяет, если ли завершенные вылазки.
     Если есть - генерирует событие и уведомляет игрока.
     """
-    while True:
-        try:
-            async with async_session_maker() as session:
-                use_cases = create_async_use_cases()
 
-                async with SqlAlchemyUnitOfWork(async_session_maker) as uow:
-                    expeditions = await use_cases["get_active_expeditions"].execute(uow)
+    def __init__(
+        self,
+        complete_expetidion_use_case: CompleteExpeditionUseCase,
+        get_active_expedition_use_case: GetActiveExpeditionUseCase,
+        notification_service: NotificationService,
+        async_session_maker: callable
+    ):
+        self._complete_expedition_uc = complete_expetidion_use_case
+        self._get_acive_expedition_uc = get_active_expedition_use_case
+        self._notification_service = notification_service
+        self._session_maker = async_session_maker
+
+    async def run(self):
+        while True:
+            try:
+
+                async with SqlAlchemyUnitOfWork(self._session_maker) as uow:
+                    expeditions = await self._get_acive_expedition_uc.execute(uow)
 
                     for exp in expeditions:
                         try:
                             # Завершаем вылазку -> генерируем событие
-                            event = await use_cases["complete_expedition"].execute(
-                                exp.player_id,
-                                uow
-                            )
+                            event = await self._complete_expedition_uc.execute(exp.player_id, uow)
 
                             # Отправляем уведомления игроку
-                            # TODO: вынести в отдельную функцию уведомления
-                            if hasattr(event, "monster"):
-                                msg = (
-                                    f"🗺️ Твоя вылазка завершена!\n"
-                                    f"👹 Ты встретил {event.monster.name} (ур. {event.monster.level})!\n"
-                                    f"⚔️ Бой начинается!"
+                            if isinstance(event, MonsterEncounter):
+                                await self._notification_service.notify_expedition_complete(
+                                    player_id=exp.player_id,
+                                    monster_name=event.monster.name,
+                                    monster_level=event.monster.level,
                                 )
-                                await bot.send_message(chat_id=int(exp.player_id), text=msg, reply_markup=get_battle_keyboard(exp.player_id))
 
                             # TODO: для торговца, ресурсов - другие сообщения
+                        except ExpeditionNotFinishedError:
+                            continue
                         except Exception as e:
                             print(
                                 f"Ошибка при обработке вылазки {exp.player_id}: {e}")
+            except Exception as e:
+                print(f'Ошибка в фоновой задаче: {e}')
 
-        except Exception as e:
-            print(f'Ошибка в фоновой задаче: {e}')
-
-        await asyncio.sleep(30)
+            await asyncio.sleep(30)
 
 
-async def match_active_expeditions_for_pvp(bot: Bot, async_session_maker: callable):
-    """фоновая задача: которая каждый 10 сек ищект пары для PVP"""
-    while True:
-        try:
-            use_cases = create_async_use_cases()
+class PvpMatchingBackgroundTask:
+    """Фоновая задача для матчинга PvP дуэлей"""
 
-            async with SqlAlchemyUnitOfWork(async_session_maker) as uow:
-                matches = await use_cases["match_pvp_expeditions"].execute(uow)
-                # Отправляем уведомления
-                # TODO: Сделать отдельный модуль для оправки уведомлений
-                for match in matches:
-                    try:
-                        msg1 = (
-                            f"⚔️ Во время вылазки ты встретил игрока {match.player2_name}!\n"
-                            f"Бой начинается!"
-                        )
-                        msg2 = (
-                            f"⚔️ Во время вылазки ты встретил игрока {match.player1_name}!\n"
-                            f"Бой начинается!"
-                        )
-                        await bot.send_message(chat_id=int(match.player1_id), text=msg1, reply_markup=get_battle_keyboard(match.player1_id))
-                        await bot.send_message(chat_id=int(match.player2_id), text=msg1)
-                        print(
-                            f"Создана PVP дуэль: {match.player1_id} VS {match.player2_id}")
-                    except Exception as e:
-                        print(f"Ошибка отправки удедомления: {e}")
+    def __init__(
+        self,
+        match_pvp_expedition_use_case: MatchPvpExpeditionsUseCase,
+        notification_service: NotificationService,
+        async_session_maker: callable
+    ):
+        self._match_pvp_expedition_uc = match_pvp_expedition_use_case
+        self._notification_service = notification_service
+        self._session_maker = async_session_maker
 
-        except Exception as e:
-            print(f'Ошибка матчинка PVP: {e}')
+    async def run(self):
+        """фоновая задача: которая каждый 10 сек ищект пары для PVP"""
+        while True:
+            try:
+                async with SqlAlchemyUnitOfWork(self._session_maker) as uow:
+                    matches = await self._match_pvp_expedition_uc.execute(uow)
 
-        await asyncio.sleep(10)
+                    # Отправляем уведомления
+                    if matches:
+                        await self._notification_service.notify_pvp_match_found(matches)
+
+            except Exception as e:
+                print(f'Ошибка матчинка PVP: {e}')
+
+            await asyncio.sleep(10)

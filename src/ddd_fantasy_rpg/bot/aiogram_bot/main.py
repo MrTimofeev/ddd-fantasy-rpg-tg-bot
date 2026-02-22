@@ -10,7 +10,7 @@ from aiogram.enums import ParseMode
 
 from ddd_fantasy_rpg.bot.aiogram_bot.handlers import register_handlers
 from ddd_fantasy_rpg.infrastructure.database.async_session import get_async_sessionmaker
-from ddd_fantasy_rpg.bot.aiogram_bot.background_tasks import check_completed_expeditions, match_active_expeditions_for_pvp
+from ddd_fantasy_rpg.bot.aiogram_bot.factories import create_background_task
 
 
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +31,8 @@ async def main():
 
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
         parse_mode=ParseMode.HTML))
-
+    
+    
     dp = Dispatcher()
 
     # Передаем сессию в middleware
@@ -39,9 +40,12 @@ async def main():
 
     register_handlers(dp)
 
+    
+    background_tasks = create_background_task(bot, async_session_maker)
+    
     # Запуск фоновой задачи
-    asyncio.create_task(check_completed_expeditions(bot, async_session_maker))
-    asyncio.create_task(match_active_expeditions_for_pvp(bot, async_session_maker))
+    asyncio.create_task(background_tasks["expedition_completion"].run())
+    asyncio.create_task(background_tasks["pvp_matching"].run())
 
     await dp.start_polling(bot)
 
