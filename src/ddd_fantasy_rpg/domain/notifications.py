@@ -49,7 +49,7 @@ class NotificationService(ABC):
         self,
         winner_id: str,
         loser_id: str,
-        battle_outcone: dict
+        battle_outcome: dict
     ) -> None:
         """Уведомляет игроков о завершении боя."""
         raise NotImplementedError
