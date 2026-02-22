@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from ddd_fantasy_rpg.application.use_cases.match_pvp_expeditions import PvpMatchResult
+from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
 
 class NotificationService(ABC):
     """Абстракция сервиса уведомлений."""
@@ -30,4 +31,26 @@ class NotificationService(ABC):
         player_id: str,
         battle_state: str,
     ) -> None:
+        """Уведомляет игрока о его ходе в бою."""
         raise NotImplementedError
+    
+    @abstractmethod
+    async def notify_battle_action_result(
+        self,
+        player_id: str,
+        result: BattleActionResult,
+        is_current_player: bool = True
+    ) -> None:
+        """Уведомляет игрока о результате действия в бою."""
+        raise NotImplementedError
+        
+    @abstractmethod
+    async def notify_battle_finished(
+        self,
+        winner_id: str,
+        loser_id: str,
+        battle_outcone: dict
+    ) -> None:
+        """Уведомляет игроков о завершении боя."""
+        raise NotImplementedError
+    
