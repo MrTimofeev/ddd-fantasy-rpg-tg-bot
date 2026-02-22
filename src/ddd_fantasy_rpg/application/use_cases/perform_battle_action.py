@@ -33,10 +33,8 @@ class PerformBattleActionUseCase:
 
     def __init__(
         self,
-        random_provider: RandomProvider,
         complete_battle_use_case: CompleteBattleUseCase,
     ):
-        self._random_provider = random_provider
         self._complete_buttle_uc = complete_battle_use_case
 
     async def execute(self, player_id: str, action: BattleAction, uow: UnitOfWork) -> BattleActionResult:

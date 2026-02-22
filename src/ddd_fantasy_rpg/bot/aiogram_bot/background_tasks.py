@@ -65,11 +65,11 @@ class PvpMatchingBackgroundTask:
 
     def __init__(
         self,
-        match_pvp_expedition_use_case: MatchPvpExpeditionsUseCase,
+        match_pvp_use_case: MatchPvpExpeditionsUseCase,
         notification_service: NotificationService,
         async_session_maker: callable
     ):
-        self._match_pvp_expedition_uc = match_pvp_expedition_use_case
+        self._match_pvp_expedition_uc = match_pvp_use_case
         self._notification_service = notification_service
         self._session_maker = async_session_maker
 
