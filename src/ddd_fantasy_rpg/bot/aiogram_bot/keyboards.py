@@ -11,8 +11,8 @@ def get_battle_keyboard(player_id: str) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="🧪 Использовать предмет",
-                                 callback_data=f"battle_item_{player_id}"),
+                                 callback_data=f"battle_use_item_{player_id}"),
             InlineKeyboardButton(
-                text="🌀 Скиллы", callback_data=f"battle_skills_{player_id}"),
+                text="🌀 Скиллы", callback_data=f"battle_use_skill_{player_id}"),
         ]
     ])

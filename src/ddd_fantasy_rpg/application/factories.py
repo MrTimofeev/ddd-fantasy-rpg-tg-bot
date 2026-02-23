@@ -1,6 +1,7 @@
 from ddd_fantasy_rpg.infrastructure.time import UtcTimeProvider
 from ddd_fantasy_rpg.infrastructure.random import SystemRandomProvider
 from ddd_fantasy_rpg.infrastructure.notifications import TelegramNotificationService
+from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 from ddd_fantasy_rpg.application import (
     StartExpeditionUseCase,
     StartBattleUseCase,
@@ -27,7 +28,7 @@ def create_async_use_cases():
     complete_battle_uc = CompleteBattleUseCase()
     get_active_exp_uc = GetActiveExpeditionUseCase()
     match_pvp_uc = MatchPvpExpeditionsUseCase(start_battle_uc)
-    perform_battle_action_uc = PerformBattleActionUseCase(random_provider, complete_battle_uc)
+    perform_battle_action_uc = PerformBattleActionUseCase(complete_battle_uc)
     create_player_uc = CreatePlayerUseCase()
 
     return {
@@ -48,7 +49,7 @@ class ApplicationFactory:
     def __init__(
         self,
         bot: "Bot", 
-        async_session_maker: callable
+        async_session_maker
     ):
         self.bot = bot
         self.session_maker = async_session_maker
@@ -104,21 +105,18 @@ class ApplicationFactory:
             "pvp_matching": pvp_task,
         }
         
-    def get_use_cases(self):
-        """Возвращает все Use Case"""
-        return {
-            "start_expedition": self.start_exp_uc,
-            "complete_expedition": self.complete_exp_uc,
-            "start_battle": self.start_battle_uc,
-            "complete_battle": self.complete_battle_uc,
-            "get_active_expeditions": self.get_active_exp_uc,
-            "match_pvp_expeditions": self.match_pvp_uc,
-            "perform_battle_action": self.perform_battle_action_uc,
-            "create_player": self.create_player_uc,
-        }
-    
-    def get_services(self):
-        """Возвращает сервисы"""
-        return {
-            "notification_service": self.notification_service
-        }
+    def create_dependency_context(self) -> DependencyContext:
+        """Создает единый контект зависимостей."""
+        
+        return DependencyContext(
+            # Use Cases
+            create_player_use_case=self.create_player_uc,
+            start_expedition_use_case=self.start_exp_uc,
+            perform_battle_action_use_case=self.perform_battle_action_uc,
+            
+            # Services
+            notification_service=self.notification_service,
+            
+            # Infrastructure
+            async_session_maker=self.session_maker
+        )
