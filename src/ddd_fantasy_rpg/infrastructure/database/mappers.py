@@ -53,12 +53,12 @@ def player_to_orm(player: Player) -> PlayerORM:
 
     return PlayerORM(
         id=player.id,
-        telegram_id=player.telegram_id,
-        name=player.name,
-        race=player.race.value,
-        player_profession=player.profession.value,
-        level=player.level,
-        exp=player.exp,
+        telegram_id=player._telegram_id,
+        name=player._name,
+        race=player._race.value,
+        player_profession=player._profession.value,
+        level=player._level,
+        exp=player._exp,
         inventory=inventory_data,
         equipped=equipped_data,
     )
@@ -73,14 +73,14 @@ def player_from_orm(orm: PlayerORM) -> Player:
         equipped[slot] = _item_from_dict(item_data)
 
     player = Player.__new__(Player)
-    player.id = orm.id
-    player.telegram_id = orm.telegram_id
-    player.name = orm.name
-    player.race = Race(orm.race)
-    player.profession = PlayerClass(orm.player_profession)
-    player.level = orm.level
-    player.exp = orm.exp
-    player.inventory = inventory
+    player._id = orm.id
+    player._telegram_id = orm.telegram_id
+    player._name = orm.name
+    player._race = Race(orm.race)
+    player._profession = PlayerClass(orm.player_profession)
+    player._level = orm.level
+    player._exp = orm.exp
+    player._inventory = inventory
     player._equipped = equipped
     player._base_stats = player._calculate_base_stats()
     return player
@@ -217,7 +217,7 @@ def battle_from_orm(orm: BattleORM) -> Optional[Battle]:
     battle._attacker = attacker
     battle._defender = defender
     battle._current_turn_owner_id = orm.current_turn_owner_id
-    battle.is_finished = orm.is_finished
+    battle._is_finished = orm.is_finished
     battle._winner = winner
     battle._flee_attempts = {attacker.id: 0, defender.id: 0}  # TODO: сохранять/загружать flee_attempts сейчас костыль, а еще лучше сделать фиксированные шанс, которые зависит от твоей ловкости и ловкости врага
     return battle
