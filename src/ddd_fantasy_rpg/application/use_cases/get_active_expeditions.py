@@ -16,4 +16,4 @@ class GetActiveExpeditionUseCase:
         Возвращает все активные (не завершенные) экспедиции.
         """
         
-        return await uow.expeditions.get_all_active_expeditions()
+        return await uow.expeditions.get_completed_but_unprocessed_expeditions()

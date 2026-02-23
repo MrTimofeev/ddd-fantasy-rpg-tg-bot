@@ -38,7 +38,7 @@ class MatchPvpExpeditionsUseCase:
         Все изменения (прерывания экспедиций, запуск боев) сохраняются здесь.
         """
         # 1. Получаем все активные экспедиции
-        active_expeditions = await uow.expeditions.get_active_expeditions()
+        active_expeditions = await uow.expeditions.get_all_active_expeditions()
         if len(active_expeditions) < 2:
             return []
 

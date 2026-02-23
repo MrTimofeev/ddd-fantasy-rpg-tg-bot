@@ -13,9 +13,9 @@ class ExpeditionRepository(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def get_active_expeditions(self) -> list[Expedition]:
+    async def get_all_active_expeditions(self) -> list[Expedition]:
         raise NotImplementedError
     
     @abstractmethod
-    async def get_all_active_expeditions(self) -> list[Expedition]:
+    async def get_completed_but_unprocessed_expeditions(self) -> list[Expedition]:
         raise NotImplementedError

@@ -27,7 +27,7 @@ class AsyncExpeditionRepository(ExpeditionRepository):
         orm = result.scalar_one_or_none()
         return expedition_from_orm(orm) if orm else None
 
-    async def get_all_active_expeditions(self) -> list[Expedition]:
+    async def get_completed_but_unprocessed_expeditions(self) -> list[Expedition]:
         """
         Возвращаем все вылазки, которые:
         - завершились по веремени (end_time <= now),
@@ -47,7 +47,7 @@ class AsyncExpeditionRepository(ExpeditionRepository):
 
         return [expedition_from_orm(orm) for orm in orm_objects]
     
-    async def get_active_expeditions(self) -> list[Exception]:
+    async def get_all_active_expeditions(self) -> list[Expedition]:
         stmt = select(ExpeditionORM).where(ExpeditionORM.status == "active")
         result = await self._session.execute(stmt)
         orm_object = result.scalars().all()
