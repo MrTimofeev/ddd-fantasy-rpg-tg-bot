@@ -28,7 +28,7 @@ def create_async_use_cases():
     complete_battle_uc = CompleteBattleUseCase()
     get_active_exp_uc = GetActiveExpeditionUseCase()
     match_pvp_uc = MatchPvpExpeditionsUseCase(start_battle_uc)
-    perform_battle_action_uc = PerformBattleActionUseCase(complete_battle_uc)
+    perform_battle_action_uc = PerformBattleActionUseCase(random_provider, complete_battle_uc)
     create_player_uc = CreatePlayerUseCase()
 
     return {
@@ -65,7 +65,7 @@ class ApplicationFactory:
         self.start_battle_uc = StartBattleUseCase()
         self.start_exp_uc = StartExpeditionUseCase(self.time_provider)
         self.complete_battle_uc = CompleteBattleUseCase()
-        self.perform_battle_action_uc = PerformBattleActionUseCase(self.complete_battle_uc)
+        self.perform_battle_action_uc = PerformBattleActionUseCase(self.random_provider, self.complete_battle_uc)
         self.match_pvp_uc = MatchPvpExpeditionsUseCase(self.start_battle_uc)
         
         # === Expedition ===
