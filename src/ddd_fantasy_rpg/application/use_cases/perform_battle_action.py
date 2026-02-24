@@ -36,7 +36,7 @@ class PerformBattleActionUseCase:
         random_provider: RandomProvider,
         complete_battle_use_case: CompleteBattleUseCase,
     ):
-        self._randome_provider = random_provider
+        self._random_provider = random_provider
         self._complete_buttle_uc = complete_battle_use_case
 
     async def execute(self, player_id: str, action: BattleAction, uow: UnitOfWork) -> BattleActionResult:
@@ -54,13 +54,13 @@ class PerformBattleActionUseCase:
         if battle.is_finished:
             raise BattleAlreadyFinishedError()
 
-        # 3. Выпоолняем действие игрока
+        # 3. Выполняем действие игрока
         result = battle.perform_action(
             player_id, action, self._random_provider)
 
         # 4. Если бой завершился после хода игрока
         if battle.is_finished:
-            outcome = await self._complete_buttle_uc.execute(battle, uow)
+            outcome = await self._complete_buttle_uc.complete_pvp_battle(battle, uow)
             await uow.battles.save(battle)
             message = self._format_battle_result(result, battle, player_id)
             return BattleActionResult(
@@ -89,7 +89,7 @@ class PerformBattleActionUseCase:
 
             # Проверяем, завершился ли бой после хода монстра
             if battle.is_finished:
-                outcome = await self._complete_buttle_uc.execute(battle, uow)
+                outcome = await self._complete_buttle_uc.complete_pve_battle(battle, uow)
                 await uow.battles.save(battle)
                 return BattleActionResult(
                     message=message,

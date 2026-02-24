@@ -3,6 +3,8 @@ from typing import List
 
 from ddd_fantasy_rpg.application.use_cases.match_pvp_expeditions import PvpMatchResult
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
+from ddd_fantasy_rpg.domain.battle_result import BattleResult
+
 
 class NotificationService(ABC):
     """Абстракция сервиса уведомлений."""
@@ -47,9 +49,7 @@ class NotificationService(ABC):
     @abstractmethod
     async def notify_battle_finished(
         self,
-        winner_id: str,
-        loser_id: str,
-        battle_outcome: dict
+        battle_result: BattleResult,
     ) -> None:
         """Уведомляет игроков о завершении боя."""
         raise NotImplementedError

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional, List
 
+
 from .skill import Skill, SkillType
 from .random_provider import RandomProvider
 
@@ -13,6 +14,8 @@ from .exceptions import (
     NotYourTurnError,
     BattleAlreadyFinishedError,
 )
+
+from .battle_result import BattleResult, BattleParticipant, PvpVictory, PlayerVictory, MonsterVictory
 
 
 class CombatantType(Enum):
@@ -62,6 +65,14 @@ class Combatant:
     @property
     def available_skills(self) -> List[Skill]:
         return [s for s in self.skills if self._skill_cooldowns[s.name] == 0]
+
+    @property
+    def is_player(self) -> bool:
+        return self.combatant_type == CombatantType.PLAYER
+
+    @property
+    def is_monster(self) -> bool:
+        return self.combatant_type == CombatantType.MONSTER
 
     def _take_damage(self, damage: int) -> None:
         self._current_hp = max(0, self._current_hp - damage)
@@ -252,3 +263,49 @@ class Battle:
             opponent._reduce_colldowns()
 
         return result
+
+    def get_battle_result(self) -> BattleResult:
+        """Возвращает результат завершенного боя."""
+
+        if not self.is_finished():
+            raise ValueError("Battle is not finished")
+
+        winner = self.winner
+        loser = self.get_opponent_id(winner.id)
+
+        winner_participant = BattleParticipant(
+            id=winner.id,
+            is_player=winner.is_player,
+            is_monster=winner.is_monster
+        )
+
+        loser_participant = BattleParticipant(
+            id=loser.id,
+            is_player=loser.is_player,
+            is_monster=loser.is_monster
+        )
+
+        is_pvp = winner.is_player and loser.is_player
+
+        # определяем тип исхода
+        if is_pvp:
+            outcome = PvpVictory(
+                winner=winner_participant,
+                loser=loser_participant,
+                loot=[]
+            )
+        elif winner.is_player:
+            outcome = PlayerVictory(
+                winner=winner_participant,
+                loser=loser_participant,
+                loot=[],
+                experience_gained=0
+            )
+        else: # winner.is_monster
+            outcome = MonsterVictory(
+                winner=winner_participant,
+                loser=loser_participant
+            )
+            
+        return BattleResult(outcome=outcome, is_pvp=is_pvp)
+            

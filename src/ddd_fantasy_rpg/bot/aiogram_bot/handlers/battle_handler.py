@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
-from ddd_fantasy_rpg.domain.battle import BattleAction, BattleActionType
+from ddd_fantasy_rpg.domain.battle import BattleAction, BattleActionType, BattleResult
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
 from ddd_fantasy_rpg.domain.exceptions import DomainError
 from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
@@ -134,31 +134,17 @@ async def _send_battle_result(
 ):
     """Отправляем результат боя."""
     if result.is_finished:
-        # определяем участников боя для уведомления
-        winner_id = None
-        loser_id = None
-        
-        if result.battle_outcome:
-            if result.battle_outcome.get("winner") == "player":
-                winner_id = player_id
-                if result.battle_outcome.get("is_pvp"):
-                    loser_id = result.opponent_id
-            elif result.battle_outcome.get("player_died"):
-                loser_id = player_id
-                if result.battle_outcome.get("is_pvp"):
-                    winner_id = result.opponent_id
-                    
         # Отправляем финальные уведомления
         await dependencies.notification_service.notify_battle_finished(
-            winner_id=winner_id,
-            loser_id=loser_id,
-            battle_outcome=result.battle_outcome
+            battle_result=result
         )
         
         # отправляем основное сообщение о результате боя
         await callback.message.answer(result.message)
         
     else:
+        
+        # TODO: Починить теперь не отправляется сообщение для обычного хода
         # Оправляем уведомление текущему игроку
         await dependencies.notification_service.notify_battle_action_result(
             player_id=player_id,

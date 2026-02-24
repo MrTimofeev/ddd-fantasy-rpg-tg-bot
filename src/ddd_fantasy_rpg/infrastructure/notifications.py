@@ -3,6 +3,7 @@ from typing import List
 
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
 from ddd_fantasy_rpg.domain.notifications import NotificationService
+from ddd_fantasy_rpg.domain.battle_result import BattleResult, PlayerVictory, PvpVictory, MonsterVictory
 from ddd_fantasy_rpg.application.use_cases.match_pvp_expeditions import PvpMatchResult
 from ddd_fantasy_rpg.bot.aiogram_bot.keyboards import get_battle_keyboard
 
@@ -102,23 +103,37 @@ class TelegramNotificationService(NotificationService):
             
     async def notify_battle_finished(
         self,
-        winner_id: str,
-        loser_id: str,
-        battle_outcome: dict
+        battle_result: BattleResult,
     ) -> None:
         """Уведомляет игроков о завершении боя."""
-        try:
-            # Уведомление победителю
-            if battle_outcome.get("winner") == "player":
-                await self._bot.send_message(winner_id,  "🏆 Победа! Добыча получена.")
+        
+        if isinstance(battle_result.outcome,  PlayerVictory):
+            await self._bot.send_message(
+                battle_result.outcome.winner.id,
+                "🏆 Победа! Добыча получена."
+            )
             
-            # Уведомление проигравшему
-            if battle_outcome.get("player_died"):
-                await self._bot.send_message(loser_id, "💀 Ты пал в бою... Весь инвентарь потерян!")
-            elif battle_outcome.get("winner") == "monster":
-                await self._bot.send_message(loser_id, "💀 Ты пал в бою...")
-        except Exception as e:
-            print(f"Ошибка отправки финальных уведомлений: {e}")
+            if battle_result.outcome.loot:
+                # TODO: отправить информацию о луте
+                pass
+        
+        elif isinstance(battle_result.outcome, MonsterVictory):
+            await self._bot.send_message(
+                battle_result.outcome.loser.id,
+                "💀 Ты пал в бою... Весь инвентарь потерян!"
+            )
+            
+        elif isinstance(battle_result.outcome, PvpVictory):
+            await self._bot.send_message(
+                battle_result.outcome.winner.id,
+                "🏆 Победа в дуэли! Добыча получена."
+            )
+            
+            await self._bot.send_message(
+                battle_result.outcome.loser.id,
+                "💀 Ты проиграл дуэль... Весь инвентарь потерян!"
+            )
+        
                 
     def _extract_player_hp(self, message: str) -> str:
         """Извлекает HP игрока из сообщения."""
