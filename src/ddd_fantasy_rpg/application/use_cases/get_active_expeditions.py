@@ -1,7 +1,7 @@
 from typing import List
 
 from ddd_fantasy_rpg.domain.expedition import Expedition
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 
 class GetActiveExpeditionUseCase:
     """

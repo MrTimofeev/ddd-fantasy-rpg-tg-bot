@@ -1,7 +1,7 @@
-from ddd_fantasy_rpg.domain.time_provider import TimeProvider
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 
-from ddd_fantasy_rpg.domain.exceptions import PlayerNotFoundError, PlayerAlreadyOnExpeditionError
+from ddd_fantasy_rpg.domain.common.exceptions import PlayerNotFoundError, PlayerAlreadyOnExpeditionError
 from ddd_fantasy_rpg.domain.expedition import Expedition, ExpeditionDistance
 
 

@@ -1,22 +1,10 @@
-from enum import Enum
 from typing import List
 
-from .item import Item, ItemType
-from .exceptions import CannotEquipItemError
+from ..shared.item import Item, ItemType
+from ..common.exceptions import CannotEquipItemError
+from .race import Race
+from .player_profession import PlayerClass
 
-
-class Race(Enum):
-    HUMAN = "human"
-    ELF = "elf"
-    ORC = "orc"
-    DWARF = "dwarf"
-
-
-class PlayerClass(Enum):
-    WARRIOR = "warrior"
-    MAGE = "mage"
-    ROGUE = "rogue"
-    PALADIN = "paladin"
 
 
 class Player:

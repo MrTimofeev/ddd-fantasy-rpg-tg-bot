@@ -1,7 +1,7 @@
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common import UnitOfWork
 from ddd_fantasy_rpg.domain import Battle, CombatantType, PlayerDuelEncounter
-from ddd_fantasy_rpg.domain.battle_result import BattleResult, PlayerVictory, MonsterVictory, PvpVictory
-from ddd_fantasy_rpg.domain.exceptions import BattleAlreadyFinishedError, PlayerNotFoundError
+from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, PlayerVictory, MonsterVictory, PvpVictory
+from ddd_fantasy_rpg.domain.common import BattleAlreadyFinishedError, PlayerNotFoundError
 
 
 class CompleteBattleUseCase:

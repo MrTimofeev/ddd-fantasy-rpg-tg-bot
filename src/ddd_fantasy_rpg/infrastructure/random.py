@@ -1,6 +1,6 @@
 import random
 
-from ddd_fantasy_rpg.domain.random_provider import RandomProvider
+from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 
 
 class SystemRandomProvider(RandomProvider):

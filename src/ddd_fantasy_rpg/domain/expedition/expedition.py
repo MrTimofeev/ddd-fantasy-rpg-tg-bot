@@ -1,54 +1,15 @@
 from enum import Enum
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 
-from .monster import Monster
-from .time_provider import TimeProvider
-from .exceptions import ExpeditionNotActiveError
+from .expedition_event import ExpeditionEvent, PlayerDuelEncounter
+from .expedition_distance import ExpeditionDistance
+from .expedition_status import ExpeditionStatus
+from ..common.time_provider import TimeProvider
+from ..common.exceptions import ExpeditionNotActiveError
 
 
-class ExpeditionDistance(Enum):
-    NEAR = ("near", 1)  # 10
-    MEDIUM = ("medium", 1)  # 20
-    FAR = ("far", 1)  # 30
-
-    def __init__(self, key: str, duration: int):
-        self.key = key
-        self.duration_minutes = duration
-
-
-class ExpeditionStatus(Enum):
-    ACTIVE = "active"
-    INTERRUPTED = "interrupted"
-    COMPLETED = "completed"
-
-
-class ExpeditionEvent:
-    """Базовый класс для событий в вылазке."""
-    pass
-
-
-@dataclass
-class MonsterEncounter(ExpeditionEvent):
-    monster: Monster
-
-
-@dataclass
-class TraderEncounter(ExpeditionEvent):
-    # TODO: На будущее
-    pass
-
-
-@dataclass
-class ResourceGathering(ExpeditionEvent):
-    resource_type: str
-    amount: int
-
-
-@dataclass
-class PlayerDuelEncounter(ExpeditionEvent):
-    opponent_player_id: str
 
 
 @dataclass

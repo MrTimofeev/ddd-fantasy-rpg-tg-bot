@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
-from .item import Item
+from ..shared.item import Item
 
 @dataclass(frozen=True)
 class BattleParticipant:

@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from ddd_fantasy_rpg.domain.expedition import Expedition
 from ddd_fantasy_rpg.domain.player import Player
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.application.use_cases.start_battle import StartBattleUseCase
 
 

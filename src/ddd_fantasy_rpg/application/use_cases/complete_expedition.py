@@ -1,10 +1,10 @@
 from ddd_fantasy_rpg.domain.expedition import ExpeditionEvent, MonsterEncounter, ExpeditionStatus
-from ddd_fantasy_rpg.domain.time_provider import TimeProvider
-from ddd_fantasy_rpg.domain.random_provider import RandomProvider
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
-from ddd_fantasy_rpg.domain.expedition_event_generator import generate_event_for_expedition
+from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
+from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.expedition.expedition_event_generator import generate_event_for_expedition
 from ddd_fantasy_rpg.application.use_cases.start_battle import StartBattleUseCase
-from ddd_fantasy_rpg.domain.exceptions import ExpeditionNotFoundError, ExpeditionNotFinishedError
+from ddd_fantasy_rpg.domain.common.exceptions import ExpeditionNotFoundError, ExpeditionNotFinishedError
 
 
 class CompleteExpeditionUseCase:

@@ -1,6 +1,6 @@
 from ddd_fantasy_rpg.domain.player import Player, Race, PlayerClass
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
-from ddd_fantasy_rpg.domain.exceptions import PlayerAlreadyExistingError
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common.exceptions import PlayerAlreadyExistingError
 
 
 class CreatePlayerUseCase:

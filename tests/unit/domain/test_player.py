@@ -1,5 +1,5 @@
 from ddd_fantasy_rpg.domain.player import Player, Race, PlayerClass
-from ddd_fantasy_rpg.domain.item import Item, ItemType
+from ddd_fantasy_rpg.domain.shared.item import Item, ItemType
 
 def test_player_creation():
     player = Player(
@@ -7,7 +7,7 @@ def test_player_creation():
         telegram_id=987654321,
         name="MrSoulKing",
         race=Race.HUMAN,
-        player_class=PlayerClass.WARRIOR
+        player_profession=PlayerClass.WARRIOR
     )
     assert player.level == 1
     assert player.id == "123"

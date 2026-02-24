@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from ddd_fantasy_rpg.domain.time_provider import TimeProvider
+from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
 
 
 class UtcTimeProvider(TimeProvider):

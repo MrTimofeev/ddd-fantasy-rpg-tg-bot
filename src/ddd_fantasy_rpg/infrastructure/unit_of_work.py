@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.infrastructure.repositories import (
     AsyncPlayerRepository,
     AsyncExpeditionRepository,

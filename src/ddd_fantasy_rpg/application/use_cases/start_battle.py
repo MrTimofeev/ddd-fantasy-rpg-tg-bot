@@ -1,11 +1,11 @@
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.domain import Monster, Battle, Player, Combatant
-from ddd_fantasy_rpg.domain.combatant_factory import (
+from ddd_fantasy_rpg.domain.battle.combatant_factory import (
     create_combatant_from_player,
     create_combatant_from_monster,
 )
 
-from ddd_fantasy_rpg.domain.exceptions import PlayerNotFoundError, PlayerAlreadyInBattleError, SelfDuelError
+from ddd_fantasy_rpg.domain.common.exceptions import PlayerNotFoundError, PlayerAlreadyInBattleError, SelfDuelError
 
 
 

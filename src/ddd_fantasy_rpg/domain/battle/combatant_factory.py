@@ -1,8 +1,8 @@
-from .player import Player, PlayerClass
-from .monster import Monster
-from .battle import Combatant, CombatantStats, CombatantType
-from .skill import Skill, SkillType
-from .utils import generate_id
+from ..player import Player, PlayerClass
+from ..monster.monster import Monster
+from . import Combatant, CombatantStats, CombatantType
+from ..shared.skill import Skill, SkillType
+from ..common.utils import generate_id
 
 
 def create_combatant_from_player(player: Player) -> Combatant:

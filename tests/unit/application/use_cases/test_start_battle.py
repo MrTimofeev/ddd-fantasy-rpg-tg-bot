@@ -15,7 +15,7 @@ def test_start_battle_with_monster():
 
     use_case = StartBattleUseCase(player_repo, battle_repo)
 
-    battle = use_case.execute("p1", monster)
+    battle = use_case.start_pve_battle("p1", monster)
 
     assert battle._attacker.name == "Hero"
     assert battle._defender.name == "Goblin"

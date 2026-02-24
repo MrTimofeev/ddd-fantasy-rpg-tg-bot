@@ -1,9 +1,9 @@
 from typing import Optional
 
-from ddd_fantasy_rpg.domain.random_provider import RandomProvider
+from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 from ddd_fantasy_rpg.domain.battle import Battle, BattleAction, BattleActionType, CombatantType
-from ddd_fantasy_rpg.domain.unit_of_work import UnitOfWork
-from ddd_fantasy_rpg.domain.exceptions import BattleNotFoundError, BattleAlreadyFinishedError
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.common.exceptions import BattleNotFoundError, BattleAlreadyFinishedError
 from ddd_fantasy_rpg.application.use_cases.complete_battle import CompleteBattleUseCase
 
 
