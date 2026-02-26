@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from .battle_action import BattleActionType
+from ddd_fantasy_rpg.domain.battle.battle_action import BattleActionType
 
 
 @dataclass(frozen=True)

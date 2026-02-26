@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from ..shared.item import Item
+from ddd_fantasy_rpg.domain.shared.item import Item
 
 
 @dataclass(frozen=True)

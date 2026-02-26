@@ -1,20 +1,19 @@
 from typing import Dict, Optional
 
+from ddd_fantasy_rpg.domain.shared.skill import SkillType
+from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
+from ddd_fantasy_rpg.domain.battle.combatant import Combatant, CombatantType
 
-from ..shared.skill import SkillType
-from ..common.random_provider import RandomProvider
-from .combatant import Combatant, CombatantType
-
-from ..common.exceptions import (
+from ddd_fantasy_rpg.domain.battle.exeptions import (
     CombatantNotAliveError,
     CombatantNotInBattleError,
     NotYourTurnError,
     BattleAlreadyFinishedError,
 )
 
-from .battle_result import BattleResult, BattleParticipant, PvpVictory, PlayerVictory, MonsterVictory
-from .battle_action import BattleAction, BattleActionType
-from .battle_action_result import AttackResult, FleeResult, SkillUseResult, ItemUseResult, BattleActionResult
+from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, BattleParticipant, PvpVictory, PlayerVictory, MonsterVictory
+from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
+from ddd_fantasy_rpg.domain.battle.battle_action_result import AttackResult, FleeResult, SkillUseResult, ItemUseResult, BattleActionResult
 
 class Battle:
     def __init__(self, attacker: Combatant, defender: Combatant):
@@ -285,3 +284,4 @@ class Battle:
             )
 
         return BattleResult(outcome=outcome, is_pvp=is_pvp)
+

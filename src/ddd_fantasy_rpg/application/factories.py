@@ -11,37 +11,8 @@ from ddd_fantasy_rpg.application import (
     MatchPvpExpeditionsUseCase,
     PerformBattleActionUseCase,
     CreatePlayerUseCase,
+    GenerateEventUseCase,
 )
-
-
-def create_async_use_cases():
-    time_provider = UtcTimeProvider()
-    random_provider = SystemRandomProvider()
-
-    start_battle_uc = StartBattleUseCase()
-    start_exp_uc = StartExpeditionUseCase(time_provider)
-    complete_exp_uc = CompleteExpeditionUseCase(
-        start_battle_uc,
-        time_provider,
-        random_provider
-    )
-    complete_battle_uc = CompleteBattleUseCase()
-    get_active_exp_uc = GetActiveExpeditionUseCase()
-    match_pvp_uc = MatchPvpExpeditionsUseCase(start_battle_uc)
-    perform_battle_action_uc = PerformBattleActionUseCase(random_provider, complete_battle_uc)
-    create_player_uc = CreatePlayerUseCase()
-
-    return {
-        "start_expedition": start_exp_uc,
-        "complete_expedition": complete_exp_uc,
-        "start_battle": start_battle_uc,
-        "complete_battle": complete_battle_uc,
-        "get_active_expeditions": get_active_exp_uc,
-        "match_pvp_expeditions": match_pvp_uc,
-        "perform_battle_action": perform_battle_action_uc,
-        "create_player": create_player_uc,
-    }
-
 
 class ApplicationFactory:
     """Фабрика для создания всех зависимостей приложения."""
@@ -49,7 +20,7 @@ class ApplicationFactory:
     def __init__(
         self,
         bot: "Bot", 
-        async_session_maker
+        async_session_maker,
     ):
         self.bot = bot
         self.session_maker = async_session_maker
@@ -61,12 +32,15 @@ class ApplicationFactory:
         
         # === Создаем Use Case ===
         
+        # === Generate Event ===
+        self.generate_event_uc = GenerateEventUseCase(self.random_provider)
+    
         # === Battle ===
-        self.start_battle_uc = StartBattleUseCase()
-        self.start_exp_uc = StartExpeditionUseCase(self.time_provider)
+        self.start_battle_uc = StartBattleUseCase(self.notification_service)
+        self.start_exp_uc = StartExpeditionUseCase(self.generate_event_uc, self.time_provider)
         self.complete_battle_uc = CompleteBattleUseCase()
         self.perform_battle_action_uc = PerformBattleActionUseCase(self.random_provider, self.complete_battle_uc)
-        self.match_pvp_uc = MatchPvpExpeditionsUseCase(self.start_battle_uc)
+        self.match_pvp_uc = MatchPvpExpeditionsUseCase()
         
         # === Expedition ===
         self.complete_exp_uc = CompleteExpeditionUseCase(

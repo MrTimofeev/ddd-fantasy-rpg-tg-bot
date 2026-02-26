@@ -1,8 +1,9 @@
-from ..player import Player, PlayerClass
-from ..monster.monster import Monster
-from . import Combatant, CombatantStats, CombatantType
-from ..shared.skill import Skill, SkillType
-from ..common.utils import generate_id
+import uuid
+
+from ddd_fantasy_rpg.domain.player import Player, PlayerClass
+from ddd_fantasy_rpg.domain.monster.monster import Monster
+from ddd_fantasy_rpg.domain.battle.combatant import Combatant, CombatantType, CombatantStats
+from ddd_fantasy_rpg.domain.shared.skill import Skill, SkillType
 
 
 def create_combatant_from_player(player: Player) -> Combatant:
@@ -43,7 +44,7 @@ def create_combatant_from_player(player: Player) -> Combatant:
     
 def create_combatant_from_monster(monster: Monster) -> Combatant:
     return Combatant(
-        id=generate_id(),
+        id=str(uuid.uuid4()),
         name=monster.name,
         combatant_type=CombatantType.MONSTER,
         stats=CombatantStats(

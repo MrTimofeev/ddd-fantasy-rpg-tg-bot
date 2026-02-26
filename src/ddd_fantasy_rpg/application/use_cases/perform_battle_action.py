@@ -1,9 +1,12 @@
 from typing import Optional
 
 from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
-from ddd_fantasy_rpg.domain.battle import Battle, BattleAction, BattleActionType, CombatantType
+from ddd_fantasy_rpg.domain.battle.battle import Battle
+from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
+from ddd_fantasy_rpg.domain.battle.combatant import CombatantType
+from ddd_fantasy_rpg.domain.battle.exeptions import BattleNotFoundError, BattleAlreadyFinishedError
+
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
-from ddd_fantasy_rpg.domain.common.exceptions import BattleNotFoundError, BattleAlreadyFinishedError
 from ddd_fantasy_rpg.application.use_cases.complete_battle import CompleteBattleUseCase
 
 
@@ -82,8 +85,8 @@ class PerformBattleActionUseCase:
 
             # Формируем сообщение с ходом монстра
             message = self._format_battle_result(result, battle, player_id)
-            if monster_result.get("success", False):
-                message += f"\n\n👹 Монстр атакует!\n💥 Нанесено {monster_result.get('damage', 0)} урона."
+            if monster_result.succes:
+                message += f"\n\n👹 Монстр атакует!\n💥 Нанесено {monster_result.damage} урона."
             else:
                 message += f"\n\n👹 Монстр пытается атаковать, но промахивается!"
 

@@ -6,7 +6,7 @@ from ddd_fantasy_rpg.application import (
     StartExpeditionUseCase,
     PerformBattleActionUseCase
 )
-from ddd_fantasy_rpg.domain.notifications import NotificationService
+from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 
 @dataclass
 class DependencyContext:

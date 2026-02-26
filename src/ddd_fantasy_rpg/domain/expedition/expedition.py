@@ -1,13 +1,12 @@
-from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
 
-from .expedition_event import ExpeditionEvent, PlayerDuelEncounter
-from .expedition_distance import ExpeditionDistance
-from .expedition_status import ExpeditionStatus
-from ..common.time_provider import TimeProvider
-from ..common.exceptions import ExpeditionNotActiveError
+from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter
+from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
+from ddd_fantasy_rpg.domain.expedition.expedition_status import ExpeditionStatus
+from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
+from ddd_fantasy_rpg.domain.expedition.exeptions import ExpeditionNotActiveError
 
 
 
@@ -26,7 +25,13 @@ class Expedition:
             raise ValueError("End time must be after start time")
 
     @classmethod
-    def start_for(cls, player_id: str, distance: ExpeditionDistance, time_provider: TimeProvider) -> "Expedition":
+    def start_for(
+        cls,
+        player_id: str,
+        distance: ExpeditionDistance,
+        event: ExpeditionEvent,
+        time_provider: TimeProvider
+    ) -> "Expedition":
         now = time_provider.now()
         end = now + timedelta(minutes=distance.duration_minutes)
         return cls(

@@ -1,9 +1,9 @@
 from typing import List
 
-from ..shared.item import Item, ItemType
-from ..common.exceptions import CannotEquipItemError
-from .race import Race
-from .player_profession import PlayerClass
+from ddd_fantasy_rpg.domain.shared.item import Item, ItemType
+from ddd_fantasy_rpg.domain.shared.exeptions import CannotEquipItemError
+from ddd_fantasy_rpg.domain.player.race import Race
+from ddd_fantasy_rpg.domain.player.player_profession import PlayerClass
 
 
 

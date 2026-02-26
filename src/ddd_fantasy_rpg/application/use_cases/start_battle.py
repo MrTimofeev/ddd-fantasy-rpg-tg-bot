@@ -5,7 +5,8 @@ from ddd_fantasy_rpg.domain.battle.combatant_factory import (
     create_combatant_from_monster,
 )
 
-from ddd_fantasy_rpg.domain.common.exceptions import PlayerNotFoundError, PlayerAlreadyInBattleError, SelfDuelError
+from ddd_fantasy_rpg.domain.player import PlayerNotFoundError, PlayerAlreadyInBattleError, SelfDuelError
+from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 
 
 
@@ -14,6 +15,12 @@ class StartBattleUseCase:
     Use Case для старта битвы
     """
 
+    def __init__(
+        self,
+        notification_service: NotificationService,
+    ):
+        self._notification_service = notification_service
+
     async def start_pve_battle(
         self,
         player_id: str,
@@ -21,8 +28,10 @@ class StartBattleUseCase:
         uow: UnitOfWork,
     ) -> Battle:
         """Запускает PvE бой (игрок против монстра)."""
+        # TODO: Добавить уведомление игроку
         player = await self._load_player(player_id, uow)
         opponent_combatant = create_combatant_from_monster(monster)
+        await self._notification_service.notify_expedition_complete(player_id, monster.name, monster.level)
         return await self._create_battle(player, opponent_combatant, uow)
 
     async def start_pvp_battle(
@@ -32,6 +41,7 @@ class StartBattleUseCase:
         uow: UnitOfWork
     ) -> Battle:
         """Запускает PvP дуэль (игрок против игрока)."""
+        # TODO: Добавить уведомление игроку
         player1 = await self._load_player(player1_id, uow)
         player2 = await self._load_player(player2_id, uow)
         
@@ -39,6 +49,8 @@ class StartBattleUseCase:
             raise SelfDuelError()
         
         opponent_combatant = create_combatant_from_player(player2)
+        
+        await self._notification_service.notify_pvp_match_found(player1, player2)
         return await self._create_battle(player1, opponent_combatant, uow)
         
         

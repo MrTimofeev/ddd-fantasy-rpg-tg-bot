@@ -5,7 +5,6 @@ from collections import defaultdict
 from ddd_fantasy_rpg.domain.expedition import Expedition
 from ddd_fantasy_rpg.domain.player import Player
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
-from ddd_fantasy_rpg.application.use_cases.start_battle import StartBattleUseCase
 
 
 class PvpMatchResult:
@@ -29,13 +28,9 @@ class MatchPvpExpeditionsUseCase:
     Use Case для матчинга PVP-дуэлей между игроками в активных экспедициях.
     """
 
-    def __init__(self, start_battle_use_case: StartBattleUseCase):
-        self._start_battle_uc = start_battle_use_case
-
-    async def execute(self, uow: UnitOfWork) -> List[PvpMatchResult]:
+    async def execute(self, uow: UnitOfWork):
         """
-        Выполняет матчинг PVP-дуэлей и возвращает результат.
-        Все изменения (прерывания экспедиций, запуск боев) сохраняются здесь.
+        Выполняет матчинг PVP-дуэлей.
         """
         # 1. Получаем все активные экспедиции
         active_expeditions = await uow.expeditions.get_all_active_expeditions()
@@ -61,7 +56,6 @@ class MatchPvpExpeditionsUseCase:
             by_distance[exp.distance].append((exp, player))
 
         # 5. Матчим пары
-        matched_results: List[PvpMatchResult] = []
         matched_player_ids = set()
 
         for distance, pairs in by_distance.items():
@@ -91,25 +85,16 @@ class MatchPvpExpeditionsUseCase:
                         await uow.expeditions.save(exp1)
                         await uow.expeditions.save(exp2)
 
-                        # TODO: убрать это и сделать запуск боя по окончании экспедиции у ближайшего конца экспедиции у игроков
-                        # запускаем бой
-                        await self._start_battle_uc.start_pvp_battle(p1.id, p2.id, uow)
-
-                        # Сохряняем результат
-                        matched_results.append(
-                            PvpMatchResult(p1.id, p2.id, p1.name, p2.name)
-                        )
+                        # сохраняем сматченные пары чтобы не сматчить их еще раз
                         matched_player_ids.update([p1.id, p2.id])
 
                         i += 2
 
                     except Exception:
-                        # TODO: добавить логировае ошибок
+                        # TODO: добавить логирование ошибок
                         i += 1
                 else:
                     i += 1
-
-        return matched_results
 
     async def _load_players(self, player_ids: List[str], uow: UnitOfWork) -> dict[str, Player]:
         """Загружает игроков и фильтрует успешные загрузки."""

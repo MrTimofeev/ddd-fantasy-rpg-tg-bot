@@ -2,9 +2,9 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
-from ddd_fantasy_rpg.domain.battle import BattleAction, BattleActionType, BattleResult
+from ddd_fantasy_rpg.domain.battle import BattleAction, BattleActionType
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
-from ddd_fantasy_rpg.domain.exceptions import DomainError
+from ddd_fantasy_rpg.domain.common import DomainError
 from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 
 

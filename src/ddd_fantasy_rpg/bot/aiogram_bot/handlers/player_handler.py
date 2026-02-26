@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
-from ddd_fantasy_rpg.domain.exceptions import PlayerAlreadyExistingError
+from ddd_fantasy_rpg.domain.player import PlayerAlreadyExistingError
 from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 

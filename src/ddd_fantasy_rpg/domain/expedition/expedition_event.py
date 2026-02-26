@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from ..monster.monster import Monster
-from ..monster.monster import Monster
+from ddd_fantasy_rpg.domain.monster import Monster
 
 
 class ExpeditionEvent:
@@ -27,5 +26,5 @@ class ResourceGathering(ExpeditionEvent):
 
 @dataclass
 class PlayerDuelEncounter(ExpeditionEvent):
-    opponent_player_id: str
+    opponent_player_id: str | None
 

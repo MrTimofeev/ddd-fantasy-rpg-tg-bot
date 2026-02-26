@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List
 
-from ddd_fantasy_rpg.application.use_cases.match_pvp_expeditions import PvpMatchResult
-from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult
+from ddd_fantasy_rpg.domain.battle.battle_action_result import BattleActionResult
+from ddd_fantasy_rpg.domain.player import Player
 
 
 class NotificationService(ABC):
@@ -22,7 +21,8 @@ class NotificationService(ABC):
     @abstractmethod
     async def notify_pvp_match_found(
         self,
-        matches: List[PvpMatchResult]
+        player1: Player,
+        player2: Player,
     ) -> None:
         """Уведомляет о найденых PVP дуэлях."""
         raise NotImplementedError

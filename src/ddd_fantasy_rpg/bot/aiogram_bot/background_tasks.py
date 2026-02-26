@@ -1,13 +1,10 @@
 import asyncio
-from aiogram import Bot
 
 from ddd_fantasy_rpg.application.use_cases.complete_expedition import CompleteExpeditionUseCase
 from ddd_fantasy_rpg.application.use_cases.get_active_expeditions import GetActiveExpeditionUseCase
 from ddd_fantasy_rpg.application.use_cases.match_pvp_expeditions import MatchPvpExpeditionsUseCase
 from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
-from ddd_fantasy_rpg.domain.notifications import NotificationService
-from ddd_fantasy_rpg.domain.expedition import MonsterEncounter
-from ddd_fantasy_rpg.domain.exceptions import ExpeditionNotFinishedError
+from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 
 
 class ExpeditionCompletionBackgroundTask:
@@ -37,19 +34,8 @@ class ExpeditionCompletionBackgroundTask:
 
                     for exp in expeditions:
                         try:
-                            # Завершаем вылазку -> генерируем событие
-                            event = await self._complete_expedition_uc.execute(exp.player_id, uow)
-
-                            # Отправляем уведомления игроку
-                            if isinstance(event, MonsterEncounter):
-                                await self._notification_service.notify_expedition_complete(
-                                    player_id=exp.player_id,
-                                    monster_name=event.monster.name,
-                                    monster_level=event.monster.level,
-                                )
-
-                            # TODO: для торговца, ресурсов - другие сообщения
-                        except ExpeditionNotFinishedError:
+                            # Завершаем вылазку -> запускаем событие
+                            await self._complete_expedition_uc.execute(exp.player_id, uow)
                             continue
                         except Exception as e:
                             print(
@@ -78,11 +64,11 @@ class PvpMatchingBackgroundTask:
         while True:
             try:
                 async with SqlAlchemyUnitOfWork(self._session_maker) as uow:
-                    matches = await self._match_pvp_expedition_uc.execute(uow)
+                    await self._match_pvp_expedition_uc.execute(uow)
 
                     # Отправляем уведомления
-                    if matches:
-                        await self._notification_service.notify_pvp_match_found(matches)
+                    # if matches:
+                    #     await self._notification_service.notify_pvp_match_found(matches)
 
             except Exception as e:
                 print(f'Ошибка матчинка PVP: {e}')

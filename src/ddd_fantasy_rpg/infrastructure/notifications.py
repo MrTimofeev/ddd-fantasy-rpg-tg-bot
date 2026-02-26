@@ -1,10 +1,9 @@
 from aiogram import Bot
-from typing import List
 
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
 from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, PlayerVictory, PvpVictory, MonsterVictory
-from ddd_fantasy_rpg.application.use_cases.match_pvp_expeditions import PvpMatchResult
+from ddd_fantasy_rpg.domain.player import Player
 from ddd_fantasy_rpg.bot.aiogram_bot.keyboards import get_battle_keyboard
 
 
@@ -39,23 +38,23 @@ class TelegramNotificationService(NotificationService):
             
     async def notify_pvp_match_found(
         self,
-        matches: List[PvpMatchResult]
+        player1: Player,
+        player2: Player,
     ) -> None:
-        for match in matches:
-            try:
-                msg1 = (
-                    f"⚔️ Во время вылазки ты встретил игрока {match.player2_name}!\n"
-                    f"Бой начинается!"
-                )
-                msg2 = (
-                    f"⚔️ Во время вылазки ты встретил игрока {match.player1_name}!\n"
-                    f"Бой начинается!"
-                )
-                await self._bot.send_message(chat_id=int(match.player1_id), text=msg1)
-                await self._bot.send_message(chat_id=int(match.player2_id), text=msg2)
-                print(f"Уведомлеия отправлены: {match.player1_id} VS {match.player2_id}")
-            except Exception as e:
-                print(f"Ошибка оправки PvP уведомлений: {e}")
+        try:
+            msg1 = (
+                f"⚔️ Во время вылазки ты встретил игрока {player2.name}!\n"
+                f"Бой начинается!"
+            )
+            msg2 = (
+                f"⚔️ Во время вылазки ты встретил игрока {player1.name}!\n"
+                f"Бой начинается!"
+            )
+            await self._bot.send_message(chat_id=int(player1.id), text=msg1)
+            await self._bot.send_message(chat_id=int(player2.id), text=msg2)
+            print(f"Уведомлеия отправлены: {player1.id} VS {player2.id}")
+        except Exception as e:
+            print(f"Ошибка оправки PvP уведомлений: {e}")
     
     async def notify_battle_turn(
         self,
