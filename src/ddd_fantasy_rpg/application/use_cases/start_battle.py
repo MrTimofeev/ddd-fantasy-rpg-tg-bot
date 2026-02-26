@@ -23,16 +23,21 @@ class StartBattleUseCase:
 
     async def start_pve_battle(
         self,
-        player_id: str,
+        player: Player,
         monster: Monster,
         uow: UnitOfWork,
     ) -> Battle:
         """Запускает PvE бой (игрок против монстра)."""
-        # TODO: Добавить уведомление игроку
-        player = await self._load_player(player_id, uow)
+        player_combatant = create_combatant_from_player(player)
         opponent_combatant = create_combatant_from_monster(monster)
-        await self._notification_service.notify_expedition_complete(player_id, monster.name, monster.level)
-        return await self._create_battle(player, opponent_combatant, uow)
+        await self._notification_service.notify_expedition_complete(
+            player_id=player_combatant.id,
+            player_hp=player_combatant.current_hp,
+            monster_hp=opponent_combatant.current_hp,
+            monster_level=monster.level,
+            monster_name=monster.name,
+        )
+        return await self._create_battle(player_combatant, opponent_combatant, uow)
 
     async def start_pvp_battle(
         self,
@@ -48,10 +53,11 @@ class StartBattleUseCase:
         if player1_id == player2_id:
             raise SelfDuelError()
         
+        player_combatant = create_combatant_from_player(player1)
         opponent_combatant = create_combatant_from_player(player2)
         
         await self._notification_service.notify_pvp_match_found(player1, player2)
-        return await self._create_battle(player1, opponent_combatant, uow)
+        return await self._create_battle(player_combatant, opponent_combatant, uow)
         
         
     async def _load_player(
@@ -72,12 +78,11 @@ class StartBattleUseCase:
     
     async def _create_battle(
         self,
-        player: Player,
+        player_combatant: "Combatant",
         opponent_combatant: "Combatant",
         uow: UnitOfWork,
     ) -> "Battle":
         """Создает бой и сохраняет его."""
-        player_combatant = create_combatant_from_player(player)
         battle = Battle(player_combatant, opponent_combatant)
         await uow.battles.save(battle)
         return battle

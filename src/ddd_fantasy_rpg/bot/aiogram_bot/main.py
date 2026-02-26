@@ -42,7 +42,8 @@ async def main():
 
     # Запуск фоновых задач
     background_tasks = app_factory.create_background_tasks()
-    asyncio.create_task(background_tasks["expedition_completion"].run())
+    asyncio.create_task(background_tasks["complete_expetidion_by_time"].run())
+    asyncio.create_task(background_tasks["start_event_for_complete_expeditions"].run())
     asyncio.create_task(background_tasks["pvp_matching"].run())
 
     register_all_handlers(dp, dependencies)

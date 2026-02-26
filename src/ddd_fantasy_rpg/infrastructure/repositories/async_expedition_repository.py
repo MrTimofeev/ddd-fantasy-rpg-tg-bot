@@ -31,13 +31,11 @@ class AsyncExpeditionRepository(ExpeditionRepository):
         """
         Возвращаем все вылазки, которые:
         - завершились по веремени (end_time <= now),
-        - еще не обработаны (outcome_type IS NULL).
         """
         now = datetime.now(timezone.utc)
         stmt = select(ExpeditionORM).where(
             and_(
                 ExpeditionORM.end_time <= now,
-                ExpeditionORM.outcome_type.is_(None),
                 ExpeditionORM.status == "active"
             )
         )
@@ -55,5 +53,11 @@ class AsyncExpeditionRepository(ExpeditionRepository):
         return [expedition_from_orm(orm) for orm in orm_object if orm]
     
     
+    async def get_completed_expedition(self) -> list[Expedition]:
+        stmt = select(ExpeditionORM).where(ExpeditionORM.status == "completed")
+        result = await self._session.execute(stmt)
+        orm_object = result.scalars().all()
         
+        return [expedition_from_orm(orm) for orm in orm_object if orm]
+    
         

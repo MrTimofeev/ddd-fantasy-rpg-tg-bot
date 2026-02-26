@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery
 
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 from ddd_fantasy_rpg.domain.battle import BattleAction, BattleActionType
-from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
+from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleTurnResult
 from ddd_fantasy_rpg.domain.common import DomainError
 
 
@@ -110,11 +110,11 @@ async def handle_battle_use_item(
         await callback.answer("Это не твой бой!", show_alert=True)
         return
     
-    item_id = parts[4]
+    item_name = parts[4]
     
     try:
         async with dependencies.unit_of_work() as uow:
-            action = BattleAction(action_type=BattleActionType.USE_ITEM, item_id=item_id)
+            action = BattleAction(action_type=BattleActionType.USE_ITEM, item_name=item_name)
             result = await dependencies.perform_battle_action_use_case.execute(player_id, action, uow)
             await _send_battle_result(callback, result, dependencies, player_id)
     except DomainError as e:
@@ -127,35 +127,33 @@ async def handle_battle_use_item(
 
 async def _send_battle_result(
     callback: CallbackQuery,
-    result: BattleActionResult,
+    result: BattleTurnResult,
     dependencies:DependencyContext,
     player_id: str
 ):
     """Отправляем результат боя."""
     if result.is_finished:
-        # Отправляем финальные уведомления
-        await dependencies.notification_service.notify_battle_finished(
-            battle_result=result
-        )
-        
-        # отправляем основное сообщение о результате боя
-        await callback.message.answer(result.message)
-        
+        if result.battle_outcome:
+            await dependencies.notification_service.notify_battle_finished(
+                battle_result=result.battle_outcome
+            )
+            
+        message_text = dependencies.message_formatter.format_turn(result)
+        await callback.message.answer(message_text)
+    
     else:
-        
-        # TODO: Починить теперь не отправляется сообщение для обычного хода
-        # Оправляем уведомление текущему игроку
+        # Отправляем уведомление текущему игроку
         await dependencies.notification_service.notify_battle_action_result(
             player_id=player_id,
             result=result,
             is_current_player=True
         )
+       
         
+        # Уведомляем провтивника в PvP
         if result.requires_opponent_notification and result.opponent_id:
             await dependencies.notification_service.notify_battle_action_result(
                 player_id=result.opponent_id,
                 result=result,
                 is_current_player=False
             )
-
-

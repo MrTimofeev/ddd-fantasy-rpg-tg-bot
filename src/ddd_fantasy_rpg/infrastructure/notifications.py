@@ -1,9 +1,10 @@
 from aiogram import Bot
 
-from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
+from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleTurnResult
 from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, PlayerVictory, PvpVictory, MonsterVictory
 from ddd_fantasy_rpg.domain.player import Player
+from ddd_fantasy_rpg.application.formatters.battle_formatter import BattleMessageFormatter
 from ddd_fantasy_rpg.bot.aiogram_bot.keyboards import get_battle_keyboard
 
 
@@ -11,19 +12,23 @@ from ddd_fantasy_rpg.bot.aiogram_bot.keyboards import get_battle_keyboard
 class TelegramNotificationService(NotificationService):
     """Реализация уведомлений для Telegram."""
     
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Bot, message_formatter: BattleMessageFormatter):
         self._bot = bot
+        self._forrmater = message_formatter
         
     
     async def notify_expedition_complete(
         self,
         player_id: str,
+        player_hp: int,
         monster_name: str,
-        monster_level: int
+        monster_level: int,
+        monster_hp: int
     ) -> None:
         msg = (
             f"🗺️ Твоя вылазка завершена!\n"
             f"👹 Ты встретил {monster_name} (ур. {monster_level})!\n"
+            f"❤️ Твоё HP {player_hp} 👹 HP {monster_hp}\n"
             f"⚔️ Бой начинается!"
         )
         
@@ -73,23 +78,26 @@ class TelegramNotificationService(NotificationService):
     async def notify_battle_action_result(
         self,
         player_id: str,
-        result: BattleActionResult,
+        result: BattleTurnResult,
         is_current_player: bool = True
     ) -> None:
         """Уведомляет игрока о результате действия в бою."""
         try:
+            # Форматируем сообщение
+            message_text = self._forrmater.format_turn(result)
+            
             if is_current_player:
                 # Для текущего игрока - обновляем интерфейс
                 await self._bot.send_message(
                     chat_id=int(player_id),
-                    text=result.message,
+                    text=message_text,
                     reply_markup=get_battle_keyboard(player_id)
                 )
             else:
-                # Для противника в PvP - уведомление о ходе
+                # Для противника в PVP - уведомление о ход
                 opponent_msg = (
                     f"⚔️ Твой противник сделал ход!\n"
-                    f"❤️ Твоё HP: {self._extract_player_hp(result.message)}\n"
+                    f"❤️ Твоё HP: {result.player_hp}\n"
                     f"Твоя очередь атаковать!"
                 )
                 await self._bot.send_message(

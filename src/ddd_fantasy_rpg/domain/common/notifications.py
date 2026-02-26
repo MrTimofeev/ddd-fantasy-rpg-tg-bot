@@ -12,8 +12,10 @@ class NotificationService(ABC):
     async def notify_expedition_complete(
         self,
         player_id: str,
+        player_hp: int,
         monster_name: str,
-        monster_level: int
+        monster_level: int,
+        monster_hp: int
     ) -> None:
         """Уведомляет игрока о завершении экспедиции с мотрстром."""
         raise NotImplementedError
@@ -40,7 +42,7 @@ class NotificationService(ABC):
     async def notify_battle_action_result(
         self,
         player_id: str,
-        result: BattleActionResult,
+        result,
         is_current_player: bool = True
     ) -> None:
         """Уведомляет игрока о результате действия в бою."""

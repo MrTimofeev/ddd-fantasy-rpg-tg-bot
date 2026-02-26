@@ -6,6 +6,7 @@ from ddd_fantasy_rpg.application import (
     StartExpeditionUseCase,
     PerformBattleActionUseCase
 )
+from ddd_fantasy_rpg.application.formatters.battle_formatter import BattleMessageFormatter
 from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 
@@ -21,6 +22,7 @@ class DependencyContext:
 
     # Services
     notification_service: NotificationService
+    message_formatter: BattleMessageFormatter
 
     unit_of_work_factory: Callable[[], UnitOfWork]
 

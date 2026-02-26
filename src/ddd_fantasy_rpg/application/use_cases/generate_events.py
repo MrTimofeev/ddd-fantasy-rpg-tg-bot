@@ -22,7 +22,7 @@ class GenerateEventUseCase:
         """
         Случано генерирует событие для игрока
         """
-        if self._randome_provider.random() < 0.3:
+        if self._randome_provider.random() < 0.1:
             return PlayerDuelEncounter(None)
 
         monster = generate_monster_for_distance(

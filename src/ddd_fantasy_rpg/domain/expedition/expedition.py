@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
 
-from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter
+from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter, MonsterEncounter, TraderEncounter, ResourceGathering
 from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
 from ddd_fantasy_rpg.domain.expedition.expedition_status import ExpeditionStatus
 from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
@@ -17,7 +17,7 @@ class Expedition:
     distance: ExpeditionDistance
     start_time: datetime
     end_time: datetime
-    status: ExpeditionStatus = ExpeditionStatus.ACTIVE
+    status: ExpeditionStatus = ExpeditionStatus.NO_ACTIVE
     outcome: Optional[ExpeditionEvent] = None
 
     def __post_init__(self):
@@ -39,7 +39,8 @@ class Expedition:
             distance=distance,
             start_time=now,
             end_time=end,
-            status=ExpeditionStatus.ACTIVE
+            status=ExpeditionStatus.ACTIVE,
+            outcome=event
         )
 
     def is_finished(self, time_provider: TimeProvider) -> bool:
@@ -49,15 +50,28 @@ class Expedition:
         """Прерывает вылазку для дуэли"""
         if self.status != ExpeditionStatus.ACTIVE:
             raise ExpeditionNotActiveError()
-        self.status = ExpeditionStatus.INTERRUPTED
         self.outcome = PlayerDuelEncounter(
             opponent_player_id=opponent_player_id)
 
-    def complete_with_event(self, event: ExpeditionEvent) -> None:
-        """Завершаем вылазку с событие (если не прервана)."""
-        # if self.status == ExpeditionStatus.INTERRUPTED:
-        #     raise ValueError("Expedition already interrupted")
-        
+    def complete(self) -> None:
+        """Завершаем вылазку"""
         self.status = ExpeditionStatus.COMPLETED
-        self.outcome = event
+        
+    
+    def start_event(self, event) -> None:
+        """Начинает событие, устанавливает статуст в зависимости от события"""
+        if isinstance(event, MonsterEncounter):
+            self.status = ExpeditionStatus.PVE
+        elif isinstance(event, PlayerDuelEncounter):
+            self.status = ExpeditionStatus.PVP
+        elif isinstance(event, TraderEncounter):
+            self.status = ExpeditionStatus.TRADER
+        elif isinstance(event, ResourceGathering):
+            self.status = ExpeditionStatus.RESOURCE
+        else:
+            raise ValueError("Неизвестное событие")
+    
+    def complete_event(self) -> None:
+        """Завершает событие"""
+        self.status = ExpeditionStatus.NO_ACTIVE
 

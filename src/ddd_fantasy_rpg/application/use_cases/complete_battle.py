@@ -57,7 +57,8 @@ class CompleteBattleUseCase:
         # Обновляем экспедицию игрока
         expedition = await uow.expeditions.get_by_player_id(player.id)
         if expedition:
-            expedition.complete_with_event(PlayerDuelEncounter(player.id))
+            expedition.complete_event()
+            await uow.expeditions.save(expedition)
 
         await uow.battles.save(battle)
         return result
@@ -107,9 +108,10 @@ class CompleteBattleUseCase:
         for player in [winner, loser]:
             expedition = await uow.expeditions.get_by_player_id(player.id)
             if expedition:
-                expedition.complete_with_event(PlayerDuelEncounter(player.id))
+                expedition.complete_event()
                 await uow.expeditions.save(expedition)
-
+                
+            
         await uow.battles.save(battle)
         return result
 
