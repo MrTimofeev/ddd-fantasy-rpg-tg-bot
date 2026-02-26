@@ -142,18 +142,18 @@ async def _send_battle_result(
         await callback.message.answer(message_text)
     
     else:
+    
         # Отправляем уведомление текущему игроку
         await dependencies.notification_service.notify_battle_action_result(
             player_id=player_id,
             result=result,
             is_current_player=True
         )
-       
         
         # Уведомляем провтивника в PvP
         if result.requires_opponent_notification and result.opponent_id:
             await dependencies.notification_service.notify_battle_action_result(
                 player_id=result.opponent_id,
                 result=result,
-                is_current_player=False
+                is_current_player=False,
             )

@@ -79,7 +79,7 @@ class TelegramNotificationService(NotificationService):
         self,
         player_id: str,
         result: BattleTurnResult,
-        is_current_player: bool = True
+        is_current_player: bool = True,
     ) -> None:
         """Уведомляет игрока о результате действия в бою."""
         try:
@@ -87,12 +87,29 @@ class TelegramNotificationService(NotificationService):
             message_text = self._forrmater.format_turn(result)
             
             if is_current_player:
+                # Для PVE - говорим что сделал монстр
+                if not result.is_opponent_player:
+                    opponent_msg = (
+                        f"⚔️Монстр сделал ход!\n"
+                        f"💥 Тебе нанесено {result.action_result.damage} урона!"
+                        f"❤️ Твоё HP: {result.player_hp}\n"
+                        f"Твоя очередь атаковать!"
+                    )
+                    
+                    await self._bot.send_message(
+                        chat_id=int(player_id),
+                        text=opponent_msg,
+                    )
+                    
+                
                 # Для текущего игрока - обновляем интерфейс
                 await self._bot.send_message(
                     chat_id=int(player_id),
                     text=message_text,
                     reply_markup=get_battle_keyboard(player_id)
                 )
+                
+                
             else:
                 # Для противника в PVP - уведомление о ход
                 opponent_msg = (

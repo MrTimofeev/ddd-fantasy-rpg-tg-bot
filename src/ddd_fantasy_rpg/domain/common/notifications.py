@@ -43,7 +43,7 @@ class NotificationService(ABC):
         self,
         player_id: str,
         result,
-        is_current_player: bool = True
+        is_current_player: bool = True,
     ) -> None:
         """Уведомляет игрока о результате действия в бою."""
         raise NotImplementedError
