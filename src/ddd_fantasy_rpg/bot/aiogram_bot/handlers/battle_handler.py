@@ -5,7 +5,6 @@ from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 from ddd_fantasy_rpg.domain.battle import BattleAction, BattleActionType
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleActionResult
 from ddd_fantasy_rpg.domain.common import DomainError
-from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 
 
 router = Router()
@@ -24,7 +23,7 @@ async def handle_battle_attack(
         return
     
     try:
-        async with SqlAlchemyUnitOfWork(dependencies.async_session_maker) as uow:
+        async with dependencies.unit_of_work() as uow:
             action = BattleAction(action_type=BattleActionType.ATTACK)
             result = await dependencies.perform_battle_action_use_case.execute(player_id, action, uow)
             await _send_battle_result(callback, result, dependencies, player_id)
@@ -50,7 +49,7 @@ async def handle_battle_flee(
         return
     
     try:
-        async with SqlAlchemyUnitOfWork(dependencies.async_session_maker) as uow:
+        async with dependencies.unit_of_work() as uow:
             action = BattleAction(action_type=BattleActionType.FLEE)
             result = await dependencies.perform_battle_action_use_case.execute(player_id, action, uow)
             await _send_battle_result(callback, result, dependencies, player_id)
@@ -82,7 +81,7 @@ async def handle_battle_use_skill(
     skill_name = parts[4]
     
     try:
-        async with SqlAlchemyUnitOfWork(dependencies.async_session_maker) as uow:
+        async with dependencies.unit_of_work() as uow:
             action = BattleAction(action_type=BattleActionType.USE_SKILL, skill_name=skill_name)
             result = await dependencies.perform_battle_action_use_case.execute(player_id, action, uow)
             await _send_battle_result(callback, result, dependencies, player_id)
@@ -114,7 +113,7 @@ async def handle_battle_use_item(
     item_id = parts[4]
     
     try:
-        async with SqlAlchemyUnitOfWork(dependencies.async_session_maker) as uow:
+        async with dependencies.unit_of_work() as uow:
             action = BattleAction(action_type=BattleActionType.USE_ITEM, item_id=item_id)
             result = await dependencies.perform_battle_action_use_case.execute(player_id, action, uow)
             await _send_battle_result(callback, result, dependencies, player_id)

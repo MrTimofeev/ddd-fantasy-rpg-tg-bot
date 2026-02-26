@@ -4,7 +4,6 @@ from aiogram.filters import Command
 
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 from ddd_fantasy_rpg.domain.expedition import ExpeditionDistance
-from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 
 router = Router()
 
@@ -31,7 +30,7 @@ async def cmd_expedition(
 
     distance = getattr(ExpeditionDistance, distance_map[distance_str])
 
-    async with SqlAlchemyUnitOfWork(dependencies.async_session_maker) as uow:
+    async with dependencies.unit_of_work() as uow:
         try:
             await dependencies.start_expedition_use_case.execute(str(message.from_user.id), distance, uow)
             await message.answer(
