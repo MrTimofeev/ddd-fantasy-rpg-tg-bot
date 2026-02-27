@@ -19,6 +19,4 @@ class AsyncPlayerRepository(PlayerRepository):
 
     async def save(self, player: Player) -> None:
         orm = player_to_orm(player)
-        merged = await self._session.merge(orm)
-        await self._session.commit()
-        
+        await self._session.merge(orm)

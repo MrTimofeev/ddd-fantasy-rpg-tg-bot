@@ -16,8 +16,7 @@ class AsyncExpeditionRepository(ExpeditionRepository):
 
     async def save(self, expedition: Expedition) -> None:
         orm = expedition_to_orm(expedition)
-        merged = await self._session.merge(orm)
-        await self._session.commit()
+        await self._session.merge(orm)
 
     async def get_by_player_id(self, player_id: str) -> Optional[Expedition]:
         result = await self._session.execute(
@@ -42,22 +41,18 @@ class AsyncExpeditionRepository(ExpeditionRepository):
         result = await self._session.execute(stmt)
         orm_objects = result.scalars().all()
 
-
         return [expedition_from_orm(orm) for orm in orm_objects]
-    
+
     async def get_all_active_expeditions(self) -> list[Expedition]:
         stmt = select(ExpeditionORM).where(ExpeditionORM.status == "active")
         result = await self._session.execute(stmt)
         orm_object = result.scalars().all()
-        
+
         return [expedition_from_orm(orm) for orm in orm_object if orm]
-    
-    
+
     async def get_completed_expedition(self) -> list[Expedition]:
         stmt = select(ExpeditionORM).where(ExpeditionORM.status == "completed")
         result = await self._session.execute(stmt)
         orm_object = result.scalars().all()
-        
+
         return [expedition_from_orm(orm) for orm in orm_object if orm]
-    
-        

@@ -14,9 +14,7 @@ class AsyncBattleRepository(BattleRepository):
 
     async def save(self, battle: Battle) -> None:
         orm = battle_to_orm(battle)
-        merged = await self._session.merge(orm)
-        await self._session.commit()
-        
+        await self._session.merge(orm)
 
     async def get_by_id(self, battle_id: str) -> Optional[Battle]:
         result = await self._session.execute(select(BattleORM).where(BattleORM.id == battle_id))
