@@ -41,7 +41,7 @@ class StartBattleUseCase:
 
         battle_id = str(uuid.uuid4())
 
-        battle = Battle.start(battle_id, player_combatant, player_combatant)
+        battle = Battle.start(battle_id, player_combatant, opponent_combatant)
         await uow.battles.save(battle)
         return battle
 
