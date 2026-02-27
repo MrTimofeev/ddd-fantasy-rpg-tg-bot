@@ -2,8 +2,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Dict
 
-from ddd_fantasy_rpg.domain.shared.skill import Skill, SkillType
-from ddd_fantasy_rpg.domain.shared.exeptions import SkillNotAvailableError, SkillOnCooldownError
+from ddd_fantasy_rpg.domain.skill.skill import Skill, SkillType
+from ddd_fantasy_rpg.domain.skill.exeptions import SkillNotAvailableError, SkillOnCooldownError
+
 
 class CombatantType(Enum):
     PLAYER = "player"
@@ -16,6 +17,14 @@ class CombatantStats:
     agility: int
     intelligence: int
     max_hp: int
+
+
+@dataclass(frozen=True)
+class SkillEffect:
+    """Эфект от использования скилла."""
+    skill_name: str
+    effect_value: int
+    skill_type: SkillType
 
 
 @dataclass
@@ -36,7 +45,7 @@ class Combatant:
         # Ограничиваем HP диапозоном [0, max_hp]
         if self._current_hp > self.stats.max_hp:
             self._current_hp = self.stats.max_hp
-        if self.current_hp < 0:
+        if self._current_hp < 0:
             self._current_hp = 0
 
         self._skill_cooldowns = {skill.name: 0 for skill in self.skills}
@@ -61,10 +70,17 @@ class Combatant:
     def is_monster(self) -> bool:
         return self.combatant_type == CombatantType.MONSTER
 
-    def _take_damage(self, damage: int) -> None:
+    def take_damage(self, damage: int) -> None:
+        """Применяет урон и возвращает новый Combatant."""
         self._current_hp = max(0, self._current_hp - damage)
 
-    def _use_skill(self, skill_name: str) -> dict:
+
+    def take_heal(self, heal_amount: int) -> None:
+        """Применяет хил и возращает новый Combatant."""
+        self._current_hp = min(self.stats.max_hp, self._current_hp + heal_amount)
+
+    def use_skill(self, skill_name: str) -> SkillEffect:
+        """Публичный метод для использовани скилла."""
         if skill_name not in self._skill_cooldowns:
             raise SkillNotAvailableError(skill_name)
         if self._skill_cooldowns[skill_name] > 0:
@@ -72,10 +88,15 @@ class Combatant:
 
         skill = next(s for s in self.skills if s.name == skill_name)
         self._skill_cooldowns[skill_name] = skill.cooldown_turns
-        return {
-            "skill": skill,
-            "effect_value": self._calculate_skill_effect(skill)
-        }
+        effect_value = self._calculate_skill_effect(skill)
+        return SkillEffect(skill.name, effect_value, skill.skill_type)
+
+
+    def reduce_colldowns(self) -> None:
+        """Публичный метод для уменьшения кулдаунов."""
+        for name in self._skill_cooldowns:
+            if self._skill_cooldowns[name] > 0:
+                self._skill_cooldowns[name] -= 1
 
     def _calculate_skill_effect(self, skill: Skill) -> int:
         if skill.skill_type == SkillType.DAMAGE:
@@ -85,10 +106,3 @@ class Combatant:
             return skill.base_power + self.stats.intelligence
         else:
             return skill.base_power  # для BUFF и прочих
-
-    def _reduce_colldowns(self) -> None:
-        """Уменьшает все активные coldown'ы на 1"""
-        for name in self._skill_cooldowns:
-            if self._skill_cooldowns[name] > 0:
-                self._skill_cooldowns[name] -= 1
-
