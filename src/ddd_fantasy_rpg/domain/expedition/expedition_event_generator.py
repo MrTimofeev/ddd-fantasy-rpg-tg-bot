@@ -30,7 +30,7 @@ def generate_monster_for_distance(
     name, base_dmg, max_hp = random_provider.choice(monster[:level // 2 + 1])
 
     # Дроп - случайный пердмет
-    rarity = Rarity.from_level(level)
+    rarity = Rarity.COMMON
     drop_item = Item(
         name=f"{name}'s Loot",
         item_type=ItemType.WEAPON,

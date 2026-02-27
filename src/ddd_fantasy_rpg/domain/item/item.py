@@ -1,37 +1,9 @@
-from enum import Enum
 from dataclasses import dataclass, field
 
-
-class ItemType(Enum):
-    WEAPON = "weapon"
-    ARMOR = "armor"
-    HELMET = "helmet"
-    CONSUMABLE = "consumable"
-    RESOURCE = "resource"
-    RING = "ring"
-    BOOTS = "boots"
-    
-class Rarity(Enum):
-    COMMON = 1
-    UNCOMMON = 2
-    RARE = 3
-    EPIC = 4
-    LEGENDARY = 5
-    
-    @staticmethod
-    def from_level(level: int) -> "Rarity":
-        """Преобразует уровень в редкость прeдмета."""
-        if level >=9:
-            return Rarity.LEGENDARY
-        elif level >=7:
-            return Rarity.EPIC
-        elif level >=5:
-            return Rarity.RARE
-        elif level >=3:
-            return Rarity.UNCOMMON
-        else:
-            return Rarity.COMMON
-    
+from .item_type import ItemType
+from .item_rarity import Rarity
+   
+   
     
 @dataclass(frozen=True)
 class ItemStats:

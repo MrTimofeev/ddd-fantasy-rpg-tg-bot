@@ -1,0 +1,18 @@
+items:
+  - id: "sword_iron"
+    name: "Железный меч"
+    type: "weapon"
+    rarity: "common"
+    level_required: 1
+    stats:
+      damage: 10
+      strength: 2
+
+  - id: "axe_battle"
+    name: "Боевой топор"
+    type: "weapon" 
+    rarity: "uncommon"
+    level_required: 5
+    stats:
+      damage: 15
+      strength: 3

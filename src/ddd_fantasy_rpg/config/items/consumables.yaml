@@ -1,0 +1,16 @@
+items:
+  - id: "potion_heal_small"
+    name: "Малое зелье исцеления"
+    type: "potion"
+    rarity: "common"
+    level_required: 1
+    stats:
+      max_hp: 20
+
+  - id: "potion_mana_small"
+    name: "Малое зелье маны"
+    type: "potion"
+    rarity: "common"
+    level_required: 1
+    stats:
+      intelligence: 10

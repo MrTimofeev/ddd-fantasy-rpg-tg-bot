@@ -52,7 +52,6 @@ class StartBattleUseCase:
         uow: UnitOfWork
     ) -> Battle:
         """Запускает PvP дуэль (игрок против игрока)."""
-        # TODO: Добавить уведомление игроку
         player1 = await self._load_player(player1_id, uow)
         player2 = await self._load_player(player2_id, uow)
 
