@@ -8,6 +8,8 @@ class ItemType(Enum):
     HELMET = "helmet"
     CONSUMABLE = "consumable"
     RESOURCE = "resource"
+    RING = "ring"
+    BOOTS = "boots"
     
 class Rarity(Enum):
     COMMON = 1

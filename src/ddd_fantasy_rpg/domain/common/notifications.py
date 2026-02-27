@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult
-from ddd_fantasy_rpg.domain.battle.battle_action_result import BattleActionResult
 from ddd_fantasy_rpg.domain.player import Player
 
 

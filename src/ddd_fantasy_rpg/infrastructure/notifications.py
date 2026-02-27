@@ -91,7 +91,7 @@ class TelegramNotificationService(NotificationService):
                 if not result.is_opponent_player:
                     opponent_msg = (
                         f"⚔️Монстр сделал ход!\n"
-                        f"💥 Тебе нанесено {result.action_result.damage} урона!"
+                        f"💥 Тебе нанесено {result.action_result.damage} урона!\n"
                         f"❤️ Твоё HP: {result.player_hp}\n"
                         f"Твоя очередь атаковать!"
                     )
