@@ -16,9 +16,10 @@ from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActi
 from ddd_fantasy_rpg.domain.battle.battle_action_result import AttackResult, FleeResult, SkillUseResult, ItemUseResult, BattleActionResult
 
 class Battle:
-    def __init__(self, attacker: Combatant, defender: Combatant):
+    def __init__(self, battle_id: str, attacker: Combatant, defender: Combatant):
         if not attacker.is_alive or not defender.is_alive:
             raise CombatantNotAliveError()
+        self._id = battle_id
         self._attacker = attacker
         self._defender = defender
         self._current_turn_owner_id = attacker.id
@@ -26,6 +27,10 @@ class Battle:
         self._winner: Optional[Combatant] = None
         self._flee_attempts: Dict[str, int] = {attacker.id: 0, defender.id: 0}
 
+    @property
+    def id(self) -> str:
+        return self._id
+   
     @property
     def is_finished(self) -> bool:
         return self._is_finished
@@ -285,3 +290,8 @@ class Battle:
 
         return BattleResult(outcome=outcome, is_pvp=is_pvp)
 
+    @classmethod
+    def start(cls, battle_id: str, attacker: Combatant, defender: Combatant) -> "Battle":
+        if not attacker.is_alive or not defender.is_alive:
+            raise CombatantNotAliveError()
+        return cls(battle_id, attacker, defender)

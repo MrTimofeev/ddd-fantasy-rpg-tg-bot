@@ -1,5 +1,7 @@
+import uuid
+
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
-from ddd_fantasy_rpg.domain import Monster, Battle, Player, Combatant
+from ddd_fantasy_rpg.domain import Monster, Battle, Player
 from ddd_fantasy_rpg.domain.battle.combatant_factory import (
     create_combatant_from_player,
     create_combatant_from_monster,
@@ -7,7 +9,6 @@ from ddd_fantasy_rpg.domain.battle.combatant_factory import (
 
 from ddd_fantasy_rpg.domain.player import PlayerNotFoundError, PlayerAlreadyInBattleError, SelfDuelError
 from ddd_fantasy_rpg.domain.common.notifications import NotificationService
-
 
 
 class StartBattleUseCase:
@@ -31,13 +32,18 @@ class StartBattleUseCase:
         player_combatant = create_combatant_from_player(player)
         opponent_combatant = create_combatant_from_monster(monster)
         await self._notification_service.notify_expedition_complete(
-            player_id=player_combatant.id,
+            player_id=player.id,
             player_hp=player_combatant.current_hp,
             monster_hp=opponent_combatant.current_hp,
             monster_level=monster.level,
             monster_name=monster.name,
         )
-        return await self._create_battle(player_combatant, opponent_combatant, uow)
+
+        battle_id = str(uuid.uuid4())
+
+        battle = Battle.start(battle_id, player_combatant, player_combatant)
+        await uow.battles.save(battle)
+        return battle
 
     async def start_pvp_battle(
         self,
@@ -49,17 +55,21 @@ class StartBattleUseCase:
         # TODO: Добавить уведомление игроку
         player1 = await self._load_player(player1_id, uow)
         player2 = await self._load_player(player2_id, uow)
-        
+
         if player1_id == player2_id:
             raise SelfDuelError()
-        
-        player_combatant = create_combatant_from_player(player1)
-        opponent_combatant = create_combatant_from_player(player2)
-        
+
+        player1_combatant = create_combatant_from_player(player1)
+        player2_combatant = create_combatant_from_player(player2)
+
         await self._notification_service.notify_pvp_match_found(player1, player2)
-        return await self._create_battle(player_combatant, opponent_combatant, uow)
-        
-        
+
+        battle_id = str(uuid.uuid4())
+
+        battle = Battle.start(battle_id, player1_combatant, player2_combatant)
+        await uow.battles.save(battle)
+        return battle
+
     async def _load_player(
         self,
         player_id: str,
@@ -69,20 +79,9 @@ class StartBattleUseCase:
         player = await uow.players.get_by_id(player_id)
         if not player:
             raise PlayerNotFoundError(player_id)
-        
+
         active_battle = await uow.battles.get_active_battle_for_player(player_id)
         if active_battle:
             raise PlayerAlreadyInBattleError(player_id)
-        
+
         return player
-    
-    async def _create_battle(
-        self,
-        player_combatant: "Combatant",
-        opponent_combatant: "Combatant",
-        uow: UnitOfWork,
-    ) -> "Battle":
-        """Создает бой и сохраняет его."""
-        battle = Battle(player_combatant, opponent_combatant)
-        await uow.battles.save(battle)
-        return battle
