@@ -1,7 +1,5 @@
 from typing import Dict, Optional
 
-from ddd_fantasy_rpg.domain.shared.skill import SkillType
-from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 from ddd_fantasy_rpg.domain.battle.combatant import Combatant, CombatantType
 
 from ddd_fantasy_rpg.domain.battle.exeptions import (
@@ -13,7 +11,10 @@ from ddd_fantasy_rpg.domain.battle.exeptions import (
 
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, BattleParticipant, PvpVictory, PlayerVictory, MonsterVictory
 from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
-from ddd_fantasy_rpg.domain.battle.battle_action_result import AttackResult, FleeResult, SkillUseResult, ItemUseResult, BattleActionResult
+from ddd_fantasy_rpg.domain.battle.battle_action_result import BattleActionResult
+
+from ddd_fantasy_rpg.domain.battle.battle_mechanics_service import BattleMechanicsService
+
 
 class Battle:
     def __init__(self, battle_id: str, attacker: Combatant, defender: Combatant):
@@ -30,7 +31,7 @@ class Battle:
     @property
     def id(self) -> str:
         return self._id
-   
+
     @property
     def is_finished(self) -> bool:
         return self._is_finished
@@ -43,150 +44,12 @@ class Battle:
         self._is_finished = True
         self._winner = winner
 
-    def _calculate_base_damage(self, attacker: Combatant) -> int:
-        # Урон = сила
-        base = attacker.stats.strength
-        return base
-
-    def _is_critical_hit(self, attacker: Combatant, defender: Combatant, randome_provider: RandomProvider) -> bool:
-        # Шанс крита = (ловкость атакующего) / (ловкость защищающегося + 10)
-        crit_chance = attacker.stats.agility / (defender.stats.agility + 10)
-
-        # TODO: увеличить шанс крита
-        return randome_provider.random() < min(crit_chance, 0)  # макс 50%
-
-    def _can_flee(self, fleeing: Combatant, opponent: Combatant, randome_provider: RandomProvider) -> bool:
-        # шас побега растет с каждой попыткой
-        attemps = self._flee_attempts[fleeing.id]
-        base_chance = 0.3 + (attemps * 0.2)  # 30% 40% 70%
-        agility_factor = fleeing.stats.agility / (opponent.stats.agility + 1)
-        total_chance = min(base_chance * agility_factor, 0.9)
-        success = randome_provider.random() < total_chance
-        if success:
-            return True
-        else:
-            self._flee_attempts[fleeing.id] += 1
-            return False
-
     def _advance_turn(self, next_combatant: Combatant) -> None:
         """Передаем ход следующему игроку и уменьшает кулдауны."""
         if not self.is_finished:
             self._current_turn_owner_id = next_combatant.id
-            next_combatant._reduce_colldowns()
+            next_combatant.reduce_colldowns()
 
-    def _perform_attack(
-        self,
-        actor: Combatant,
-        opponent: Combatant,
-        random_provider: RandomProvider
-    ) -> AttackResult:
-        damage = self._calculate_base_damage(actor)
-        is_critical = self._is_critical_hit(actor, opponent, random_provider)
-
-        if is_critical:
-            # TODO: добавить множитель крита
-            pass
-
-        opponent._take_damage(damage)
-
-        # Проверка смерти
-        if not opponent.is_alive:
-            self._end_battle(actor)
-
-        # Передать ход
-        self._advance_turn(opponent)
-        return AttackResult(
-            action_type=BattleActionType.ATTACK,
-            success=True,
-            damage=damage,
-            is_critical=is_critical,
-            details="Critical hit!" if is_critical else ""
-        )
-
-    def _perform_flee(
-        self,
-        actor: Combatant,
-        opponent: Combatant,
-        randome_provider: RandomProvider
-    ) -> FleeResult:
-
-        can_flee = self._can_flee(actor, opponent, randome_provider)
-        if can_flee:
-            self._end_battle(opponent)  # победитель - оставшийся
-            self._current_turn_owner_id = None
-            return FleeResult(
-                action_type=BattleActionType.FLEE,
-                success=True,
-                details="Flee successfully!"
-            )
-        else:
-            self._flee_attempts[actor.id] += 1
-            self._advance_turn(opponent)
-            return FleeResult(
-                action_type=BattleActionType.FLEE,
-                success=False,
-                details="Failed to flee!"
-            )
-
-    def _perform_skill_use(
-        self,
-        actor: Combatant,
-        opponent: Combatant,
-        skill_name: str,
-    ) -> SkillUseResult:
-        try:
-            effect = actor._use_skill(skill_name)
-            skill = effect["skill"]
-            value = effect['effect_value']
-
-            if skill.skill_type == SkillType.DAMAGE:
-                opponent._take_damage(value)
-                return SkillUseResult(
-                    action_type=BattleActionType.USE_SKILL,
-                    success=True,
-                    skill_name=skill_name,
-                    damage=value,
-                    heal=None,
-                    details=f"Used {skill.name} for {value} damage"
-                )
-            elif skill.skill_type == SkillType.HEAL:
-                actor._current_hp = min(actor.stats.max_hp, actor._current_hp + value)
-                return SkillUseResult(
-                    action_type=BattleActionType.USE_SKILL,
-                    success=True,
-                    skill_name=skill_name,
-                    damage=None,
-                    heal=value,
-                    details=f"Used {skill.name} and healed for {value} HP!"
-                )
-            else:
-                print("Должны быть другие эффеты")
-                return SkillUseResult(
-                    action_type=BattleActionType.USE_SKILL,
-                    success=False,
-                    skill_name=skill_name,
-                    damage=None,
-                    heal=None,
-                    details=f"Произошла ошибка при использовании {skill_name}"
-                ) 
-        except ValueError as e:
-            raise ValueError("Сработал неизвестный скилл")
-    
-    def _perform_item_use(
-        self,
-        actor: Combatant,
-        opponent: Combatant,
-        item_name: str,
-    ) -> ItemUseResult:
-        # добавить реализацию
-        return ItemUseResult(
-            action_type=BattleActionType.USE_ITEM,
-            success=True,
-            item_name=item_name,
-            daetails=f"Испрользован пердмет {item_name}"
-        )
-    
-    
     def is_pvp(self) -> bool:
         """Проверяет, является ли бой PVP (игрок VS игрок)."""
         return (
@@ -215,7 +78,7 @@ class Battle:
         self,
         acting_combatant_id: str,
         action: BattleAction,
-        random_provider: RandomProvider
+        battle_mechanics: BattleMechanicsService
     ) -> BattleActionResult:
         if self._is_finished:
             raise BattleAlreadyFinishedError()
@@ -227,20 +90,47 @@ class Battle:
         opponent = self._defender if actor.id == self._attacker.id else self._attacker
 
         if action.action_type == BattleActionType.ATTACK:
-            return self._perform_attack(actor, opponent, random_provider)
+            result = battle_mechanics.perform_attack(
+                actor, opponent, self._flee_attempts)
+            opponent.take_damage(result.damage)
+            if not opponent.is_alive:
+                self._end_battle(actor)
+                
+            self._advance_turn(opponent)
+            return result
 
         elif action.action_type == BattleActionType.FLEE:
-            return self._perform_flee(actor, opponent, random_provider)
+            result = battle_mechanics.perform_flee(
+                actor, opponent, self._flee_attempts)
+            if result.success:
+                self._end_battle(opponent)
+                self._current_turn_owner_id = None
+            else:
+                self._flee_attempts[actor.id] = self._flee_attempts.get(
+                    actor.id, 0) + 1
+                self._advance_turn(opponent)
+            return result
 
         elif action.action_type == BattleActionType.USE_SKILL:
             if not action.skill_name:
                 raise ValueError("Skill name is required")
-            return self._perform_skill_use(actor, opponent, action.skill_name)
+
+            result = battle_mechanics.perform_skill_use(
+                actor, action.skill_name)
+            if result.success and result.damage:
+                opponent.take_damage(result.damage)
+            elif result.success and result.heal:
+                opponent.take_heal(result.heal)
+            self._advance_turn(opponent)
+            return result
 
         elif action.action_type == BattleActionType.USE_ITEM:
             if not action.item_name:
                 raise ValueError("Item ID is required")
-            return self._perform_item_use(actor, opponent, action.item_name)
+            result = battle_mechanics.perform_item_use(action.item_name)
+            # TODO: Применить эффект предмета
+            self._advance_turn(opponent)
+            return result
 
         else:
             raise ValueError(f"Unsupported action type: {action.action_type}")

@@ -4,6 +4,7 @@ from ddd_fantasy_rpg.infrastructure.notifications import TelegramNotificationSer
 from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 from ddd_fantasy_rpg.application.formatters.battle_formatter import BattleMessageFormatter
+from ddd_fantasy_rpg.domain.battle.battle_mechanics_service import BattleMechanicsService
 from ddd_fantasy_rpg.application import (
     StartExpeditionUseCase,
     StartBattleUseCase,
@@ -37,8 +38,9 @@ class ApplicationFactory:
         self.notification_service = TelegramNotificationService(
             bot, self.message_formatter)
 
-        # === Создаем Use Case ===
+        self.battle_mechanics = BattleMechanicsService(self.random_provider)
 
+        # === Создаем Use Case ===
         # === Generate Event ===
         self.generate_event_uc = GenerateEventUseCase(self.random_provider)
 
@@ -48,7 +50,8 @@ class ApplicationFactory:
             self.generate_event_uc, self.time_provider)
         self.complete_battle_uc = CompleteBattleUseCase()
         self.perform_battle_action_uc = PerformBattleActionUseCase(
-            self.random_provider, self.complete_battle_uc)
+            self.battle_mechanics,
+            self.complete_battle_uc)
         self.match_pvp_uc = MatchPvpExpeditionsUseCase()
 
         # === Expedition ===

@@ -10,6 +10,8 @@ from ddd_fantasy_rpg.domain.battle.exeptions import BattleNotFoundError, BattleA
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.application.use_cases.complete_battle import CompleteBattleUseCase
 
+from ddd_fantasy_rpg.domain.battle.battle_mechanics_service import BattleMechanicsService
+
 @dataclass(frozen=True)
 class BattleTurnResult:
     """Результат ходяа в бою"""
@@ -37,10 +39,10 @@ class PerformBattleActionUseCase:
 
     def __init__(
         self,
-        random_provider: RandomProvider,
+        battle_mechanics_service: BattleMechanicsService,
         complete_battle_use_case: CompleteBattleUseCase,
     ):
-        self._random_provider = random_provider
+        self._battle_mechanics = battle_mechanics_service
         self._complete_buttle_uc = complete_battle_use_case
 
     async def execute(self, player_id: str, action: BattleAction, uow: UnitOfWork) -> BattleTurnResult:
@@ -62,7 +64,7 @@ class PerformBattleActionUseCase:
         result = battle.perform_action(
             acting_combatant_id=player_id, 
             action=action, 
-            random_provider=self._random_provider
+            battle_mechanics=self._battle_mechanics
         )
 
         player_combatant = battle.get_combatant_by_id(player_id)
@@ -95,7 +97,7 @@ class PerformBattleActionUseCase:
             monster_result = battle.perform_action(
                 acting_combatant_id=opponent_combatant.id,
                 action=monster_action,
-                random_provider=self._random_provider
+                battle_mechanics=self._battle_mechanics
             )
             
             # Проверяем, завершился ли бой после хода монстра
