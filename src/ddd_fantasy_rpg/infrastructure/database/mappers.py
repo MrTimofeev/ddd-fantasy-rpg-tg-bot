@@ -61,6 +61,7 @@ def player_to_orm(player: Player) -> PlayerORM:
         exp=player._exp,
         inventory=inventory_data,
         equipped=equipped_data,
+        base_stats=player._base_stats,
     )
 
 
@@ -82,7 +83,7 @@ def player_from_orm(orm: PlayerORM) -> Player:
     player._exp = orm.exp
     player._inventory = inventory
     player._equipped = equipped
-    player._base_stats = player._calculate_base_stats()
+    player._base_stats = orm.base_stats
     return player
 
 

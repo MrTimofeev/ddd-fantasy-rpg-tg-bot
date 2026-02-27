@@ -1,9 +1,12 @@
 from typing import List
 
-from ddd_fantasy_rpg.domain.shared.item import Item, ItemType
-from ddd_fantasy_rpg.domain.shared.exeptions import CannotEquipItemError
+from ddd_fantasy_rpg.domain.item.item import Item
 from ddd_fantasy_rpg.domain.player.race import Race
 from ddd_fantasy_rpg.domain.player.player_profession import PlayerClass
+
+from ddd_fantasy_rpg.domain.player.equipment_service import EquiupmentSevice
+from ddd_fantasy_rpg.domain.player.stats_calculation_service import StatsCalculationService
+
 
 
 
@@ -33,7 +36,7 @@ class Player:
         self._inventory: List[Item] = []
         self._equipped: dict[str, Item] = {}  # например: {"weapon": item}
 
-        self._base_stats = self._calculate_base_stats()
+        self._base_stats = StatsCalculationService.calculate_base_stats(race, player_profession)
 
     @property
     def id(self) -> str:
@@ -67,39 +70,20 @@ class Player:
     def inventory(self) -> List[Item]:
         return self._inventory.copy()
 
-    def _calculate_base_stats(self) -> dict:
-        """ Базовые статы в зависимости от рассы и класса."""
-        stats = {"strength": 10, "agility": 10, "intellegence": 10}
-
-        # Пример бонусов
-        if self._race == Race.ORC:
-            stats["strength"] += 3
-
-        if self._profession == PlayerClass.WARRIOR:
-            stats["strength"] += 2
-
-        return stats
-
     def add_item(self, item: Item) -> None:
         """ Добавить предмет в инвентарь"""
         self._inventory.append(item)
 
-    def equip_item(self, item: Item, slot: str) -> None:
+    def equip_item(self, item: Item) -> None:
         """ Экипировать предмет в слот (например, 'weapon', 'helmet')."""
-        if item.level_required > self._level:
+        
+        if not EquiupmentSevice.can_equip_item(self.level, item):
             raise ValueError(
-                f"Item '{item.name}' requires level {item.level_required}, but player is level {self._level}")
-
-        slot_map = {
-            ItemType.WEAPON: "weapon",
-            ItemType.ARMOR: "armor",
-            ItemType.HELMET: "helmet",
-        }
-
-        if item.item_type not in slot_map:
-            raise CannotEquipItemError(item.item_type.value)
-
-        slot = slot_map[item.item_type]
+                f"Item '{item.name}' requires level {item.level_required}, "
+                f"But player is level {self._level}"
+            )
+        
+        slot = EquiupmentSevice.get_slot_for_item_type(item.item_type)
         self._equipped[slot] = item
 
     def get_total_stats(self) -> dict:
