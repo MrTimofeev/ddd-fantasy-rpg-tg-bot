@@ -24,7 +24,8 @@ class PlayerORM(Base):
 class ExpeditionORM(Base):
     __tablename__ = "expeditions"
 
-    player_id = Column(String, ForeignKey("players.id"), primary_key=True)
+    id = Column(String, primary_key=True)
+    player_id = Column(String, nullable=False)
     distance = Column(String, nullable=False)
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)

@@ -3,7 +3,7 @@ from datetime import timezone
 
 from ddd_fantasy_rpg.domain import (
     Player, Race, PlayerClass,
-    Expedition, ExpeditionDistance, ExpeditionStatus, 
+    Expedition, ExpeditionDistance, PlayerDuelEncounter, ExpeditionStatus,
     Item, 
     Battle, ItemType, ItemStats, Combatant, CombatantType, CombatantStats,
     Monster, MonsterEncounter
@@ -137,8 +137,14 @@ def expedition_to_orm(expedition: Expedition) -> ExpeditionORM:
                 "flee_difficulty": monster.flee_difficulty,
             }
         }
+    elif expedition.outcome and isinstance(expedition.outcome, PlayerDuelEncounter):
+        outcome_type = "pvp"
+        outcome_data = {
+            "opponent_player_id": expedition.outcome.opponent_player_id
+        }
 
     return ExpeditionORM(
+        id=expedition.id,
         player_id=expedition.player_id,
         distance=expedition.distance.key,
         start_time=expedition.start_time,
@@ -176,8 +182,13 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
             flee_difficulty=mob_data["flee_difficulty"],
         )
         outcome = MonsterEncounter(monster=monster)
+    elif orm.outcome_type == "pvp" and orm.outcome_data:
+        outcome = PlayerDuelEncounter(
+            opponent_player_id=orm.outcome_data["opponent_player_id"]
+        )
 
     return Expedition(
+        id=orm.id,
         player_id=orm.player_id,
         distance=distance,
         start_time=start_time,

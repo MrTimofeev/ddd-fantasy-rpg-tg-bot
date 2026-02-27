@@ -1,3 +1,5 @@
+import uuid
+
 from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 
@@ -29,7 +31,11 @@ class StartExpeditionUseCase:
             raise PlayerAlreadyOnExpeditionError(player_id)
         
         event = await self._generate_event_uc.execute(distance)
+        
+        expedition_id = str(uuid.uuid4())
+        
         expedition = Expedition.start_for(
+            expedition_id=expedition_id,
             player_id=player_id,
             distance=distance,
             event=event,

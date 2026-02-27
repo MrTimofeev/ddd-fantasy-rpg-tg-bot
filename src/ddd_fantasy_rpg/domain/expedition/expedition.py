@@ -13,6 +13,7 @@ from ddd_fantasy_rpg.domain.expedition.exeptions import ExpeditionNotActiveError
 
 @dataclass
 class Expedition:
+    id: str
     player_id: str
     distance: ExpeditionDistance
     start_time: datetime
@@ -27,6 +28,7 @@ class Expedition:
     @classmethod
     def start_for(
         cls,
+        expedition_id: str,
         player_id: str,
         distance: ExpeditionDistance,
         event: ExpeditionEvent,
@@ -35,6 +37,7 @@ class Expedition:
         now = time_provider.now()
         end = now + timedelta(minutes=distance.duration_minutes)
         return cls(
+            id=expedition_id,
             player_id=player_id,
             distance=distance,
             start_time=now,
