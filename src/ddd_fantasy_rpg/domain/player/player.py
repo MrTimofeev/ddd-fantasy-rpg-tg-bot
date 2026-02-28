@@ -1,6 +1,6 @@
 from typing import List
 
-from ddd_fantasy_rpg.domain.item.item import Item
+from ddd_fantasy_rpg.domain.items.item import Item
 from ddd_fantasy_rpg.domain.player.race import Race
 from ddd_fantasy_rpg.domain.player.player_profession import PlayerClass
 

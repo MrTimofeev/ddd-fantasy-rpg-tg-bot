@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from ddd_fantasy_rpg.domain.item.item import Item
+from ddd_fantasy_rpg.domain.items.item import Item
 
 @dataclass(frozen=True)
 class BattleParticipant:

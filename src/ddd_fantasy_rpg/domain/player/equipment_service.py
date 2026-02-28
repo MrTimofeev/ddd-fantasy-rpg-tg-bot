@@ -1,7 +1,7 @@
 from typing import Dict
 
-from ddd_fantasy_rpg.domain.item.item import Item, ItemType
-from ddd_fantasy_rpg.domain.item.exeptions import CannotEquipItemError
+from ddd_fantasy_rpg.domain.items.item import Item, ItemType
+from ddd_fantasy_rpg.domain.items.exeptions import CannotEquipItemError
 
 class EquiupmentSevice:
     """Доменный серсив для управления экиписровкой"""

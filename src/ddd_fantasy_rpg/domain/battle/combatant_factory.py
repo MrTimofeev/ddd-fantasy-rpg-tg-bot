@@ -3,7 +3,7 @@ import uuid
 from ddd_fantasy_rpg.domain.player import Player, PlayerClass
 from ddd_fantasy_rpg.domain.monster.monster import Monster
 from ddd_fantasy_rpg.domain.battle.combatant import Combatant, CombatantType, CombatantStats
-from ddd_fantasy_rpg.domain.skill.skill import Skill, SkillType
+from ddd_fantasy_rpg.domain.skills.skill import Skill, SkillType
 
 
 def create_combatant_from_player(player: Player) -> Combatant:

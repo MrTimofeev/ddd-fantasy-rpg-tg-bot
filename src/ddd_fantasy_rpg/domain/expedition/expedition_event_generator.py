@@ -2,7 +2,7 @@ from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDist
 from ddd_fantasy_rpg.domain.expedition.expedition_event import MonsterEncounter
 
 from ddd_fantasy_rpg.domain.monster import Monster
-from ddd_fantasy_rpg.domain.item.item import Item, ItemType, ItemStats, Rarity
+from ddd_fantasy_rpg.domain.items.item import Item, ItemType, ItemStats, Rarity
 from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 
 

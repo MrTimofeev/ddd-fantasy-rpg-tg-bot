@@ -1,13 +1,13 @@
 from typing import Dict
 
 from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
-from ddd_fantasy_rpg.domain.skill.skill import SkillType
+from ddd_fantasy_rpg.domain.skills.skill import SkillType
 from ddd_fantasy_rpg.domain.battle.combatant import Combatant
 from ddd_fantasy_rpg.domain.battle.battle_action import BattleActionType
 from ddd_fantasy_rpg.domain.battle.battle_action_result import (
     AttackResult, FleeResult, SkillUseResult, ItemUseResult
 )
-from ddd_fantasy_rpg.domain.skill.exeptions import SkillNotAvailableError, SkillOnCooldownError
+from ddd_fantasy_rpg.domain.skills.exeptions import SkillNotAvailableError, SkillOnCooldownError
 
 
 class BattleMechanicsService:

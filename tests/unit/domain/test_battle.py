@@ -2,7 +2,7 @@ from ddd_fantasy_rpg.domain.battle import (
     Battle, Combatant, CombatantStats, CombatantType, BattleAction, BattleActionType
 )
 
-from ddd_fantasy_rpg.domain.shared.skill import Skill, SkillType
+from ddd_fantasy_rpg.domain.skills.skill import Skill, SkillType
 
 
 def test_battle_attack_and_kill():

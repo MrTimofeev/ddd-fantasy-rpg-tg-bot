@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Dict
 
-from ddd_fantasy_rpg.domain.skill.skill import Skill, SkillType
-from ddd_fantasy_rpg.domain.skill.exeptions import SkillNotAvailableError, SkillOnCooldownError
+from ddd_fantasy_rpg.domain.skills.skill import Skill, SkillType
+from ddd_fantasy_rpg.domain.skills.exeptions import SkillNotAvailableError, SkillOnCooldownError
 
 
 class CombatantType(Enum):

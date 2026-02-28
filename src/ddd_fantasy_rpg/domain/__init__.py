@@ -30,11 +30,12 @@ from .repositories.player_repository import PlayerRepository
 from .repositories.battle_repository import BattleRepository
 from .repositories.expedition_repository import ExpeditionRepository
 
-from .item.item import ItemType, Item, ItemStats
-from .item.exeptions import CannotEquipItemError, InsufficientLevelError
+from .items.item import ItemType, Item, ItemStats
+from .items.exeptions import CannotEquipItemError, InsufficientLevelError
 
-from .skill.skill import Skill, SkillType
-from .skill.exeptions import SkillOnCooldownError, SkillNotAvailableError
+from .skills.skill import Skill
+from .skills.skill_type import SkillType
+from .skills.exeptions import SkillOnCooldownError, SkillNotAvailableError
 
 
 __all__ = [

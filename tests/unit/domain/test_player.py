@@ -1,5 +1,5 @@
 from ddd_fantasy_rpg.domain.player import Player, Race, PlayerClass
-from ddd_fantasy_rpg.domain.shared.item import Item, ItemType
+from ddd_fantasy_rpg.domain.items.item import Item, ItemType
 
 def test_player_creation():
     player = Player(
@@ -18,7 +18,7 @@ def test_equip_item_requires_level():
     high_level_item = Item(id="sword1", name="Excalibur", item_type= ItemType.WEAPON, level_required=10, rarity=5)
     
     try:
-        player.equip_item(high_level_item, "weapon")
+        player.equip_item(high_level_item)
         assert False, "Shoulf have raised ValueError"
     except ValueError as e:
         assert "requires level 1" in str(e)
