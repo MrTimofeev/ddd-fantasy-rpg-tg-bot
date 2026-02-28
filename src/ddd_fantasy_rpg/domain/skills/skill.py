@@ -1,11 +1,7 @@
-from enum import Enum
 from dataclasses import dataclass
 
 
-class SkillType(Enum):
-    DAMAGE = "damage"
-    HEAL = "HEAL"
-    BUFF = "buff"
+
     
 @dataclass(frozen=True)
 class Skill:

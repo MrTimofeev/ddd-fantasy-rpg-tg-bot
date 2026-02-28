@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from ddd_fantasy_rpg.domain.item.item_type import ItemType
-from ddd_fantasy_rpg.domain.item.item_stats import ItemStats
-from ddd_fantasy_rpg.domain.item.item_rarity import Rarity
+from ddd_fantasy_rpg.domain.items.item_type import ItemType
+from ddd_fantasy_rpg.domain.items.item_stats import ItemStats
+from ddd_fantasy_rpg.domain.items.item_rarity import Rarity
 
 @dataclass(frozen=True)
 class ItemTemplate:

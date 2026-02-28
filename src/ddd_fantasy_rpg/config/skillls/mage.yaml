@@ -1,0 +1,16 @@
+skills:
+  - id: "mage_fireball"
+    name: "Огненный шар"
+    type: "damage"
+    base_power: 20
+    cooldown_turns: 3
+    level_required: 1
+    description: "Магический урон огнём"
+
+  - id: "mage_heal"
+    name: "Исцеление"
+    type: "heal"
+    base_power: 25
+    cooldown_turns: 4
+    level_required: 2
+    description: "Восстанавливает здоровье"

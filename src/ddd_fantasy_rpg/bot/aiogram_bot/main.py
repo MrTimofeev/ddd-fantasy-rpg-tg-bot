@@ -11,6 +11,7 @@ from aiogram.enums import ParseMode
 from ddd_fantasy_rpg.bot.aiogram_bot.handlers import register_all_handlers
 from ddd_fantasy_rpg.infrastructure.database.async_session import get_async_sessionmaker
 from ddd_fantasy_rpg.infrastructure.repositories.item_template_repository import ItemTemplateRepository
+from ddd_fantasy_rpg.infrastructure.repositories.skill_template_repository import SkillTemplateRepository
 from ddd_fantasy_rpg.application.factories import ApplicationFactory
 
 
@@ -35,9 +36,11 @@ async def main():
     dp = Dispatcher()
 
     # Инициализируем предметы
+    # TODO: вынести в фабрику
     config_dir = Path(__file__).parent.parent.parent / "config"
     print(config_dir)
     ItemTemplateRepository.initialize(config_dir)
+    SkillTemplateRepository.initialized(config_dir)
     
     # Создаем фабрику и получаем единый контекст
     app_factory = ApplicationFactory(bot, async_session_maker)

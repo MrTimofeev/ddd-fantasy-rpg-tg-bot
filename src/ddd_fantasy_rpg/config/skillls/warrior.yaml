@@ -1,0 +1,18 @@
+skills:
+  - id: "warrior_strike"
+    name: "Мощный удар"
+    type: "damage"
+    base_power: 15
+    cooldown_turns: 2
+    level_required: 1
+    description: "Наносит урон силе противника"
+
+  - id: "warrior_taunt"
+    name: "Провокация"
+    type: "utility"
+    base_power: 0
+    cooldown_turns: 3
+    level_required: 3
+    description: "Заставляет противника атаковать вас"
+    additional_params:
+      taunt_duration: 2

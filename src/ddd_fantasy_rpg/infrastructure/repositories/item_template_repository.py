@@ -2,8 +2,9 @@ import yaml
 from pathlib import Path
 from typing import Dict, List
 
-from ddd_fantasy_rpg.domain.item.item_template import ItemTemplate
+from ddd_fantasy_rpg.domain.items.item_template import ItemTemplate
 
+# TODO: Сделать абстрактный класс и наследоваться от него
 class ItemTemplateRepository:
     """Репозиторий шаблонов предметов (загружается из конфигурации)"""
     

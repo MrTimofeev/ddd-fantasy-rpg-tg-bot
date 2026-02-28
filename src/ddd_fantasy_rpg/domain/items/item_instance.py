@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 
-from ddd_fantasy_rpg.domain.item.item_template import ItemTemplate
+from ddd_fantasy_rpg.domain.items.item_template import ItemTemplate
 
 @dataclass
 class ItemInstance:
@@ -23,7 +23,7 @@ class ItemInstance:
         
     @property
     def total_stats(self) -> "ItemStats":
-        from ddd_fantasy_rpg.domain.item.item_stats import ItemStats
+        from ddd_fantasy_rpg.domain.items.item_stats import ItemStats
         base = self.template.stats
         return ItemStats(
             strength=base.strength + self.modifiers.get("strength", 0),
