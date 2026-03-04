@@ -2,7 +2,7 @@ from enum import Enum
 
 class SkillType(Enum):
     DAMAGE = "damage"
-    HEAL = "HEAL"
+    HEAL = "heal"
     BUFF = "buff"
-    DEBUFF = 'debuff'
+    DEBUFF = "debuff"
     UTILITY = "utility"

@@ -1,13 +1,19 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict
 
-from ddd_fantasy_rpg.domain.items.item_template import ItemTemplate
+from ddd_fantasy_rpg.domain.items.item_type import ItemType
+from ddd_fantasy_rpg.domain.common.stats import CharacterStats
+
 
 @dataclass
 class ItemInstance:
     """Конкретный экземпляр предмета, принадлащий игроку."""
     id: str # Уникальный ID экзепляра 
+    name: str
     template_id: str # Ссылка на шаблон
+    level_required: int
+    item_type: ItemType
+    stats: CharacterStats
     owner_id: Optional[str] = None
     is_equipped: bool = False
     slot: Optional[str] = None
@@ -15,21 +21,13 @@ class ItemInstance:
     # Дополнительные модификаторы (для уникальных предметов)
     modifiers: Dict[str, int] = field(default_factory=dict)
     
-    @property
-    def template(self) -> ItemTemplate:
-        """Получаем шаблон предмета."""
-        from ddd_fantasy_rpg.infrastructure.repositories.item_template_repository import ItemTemplateRepository
-        return ItemTemplateRepository.get_tempalate(self.template_id)
-        
-    @property
-    def total_stats(self) -> "ItemStats":
-        from ddd_fantasy_rpg.domain.items.item_stats import ItemStats
-        base = self.template.stats
-        return ItemStats(
-            strength=base.strength + self.modifiers.get("strength", 0),
-            agility=base.agility + self.modifiers.get("agility", 0),
-            intelligence=base.intelligence + self.modifiers.get("intelligence", 0),
-            max_hp=base.max_hp + self.modifiers.get('max_hp', 0),
-            damage=base.damage + self.modifiers.get('damage', 0),
-        )
-        
+    
+    def equip(self, slot_name: str) -> None:
+        if self.is_equipped:
+            return
+        self.is_equipped = True
+        self.slot = slot_name
+    
+    def unequip(self) -> None:
+        self.is_equipped = False
+        self.slot = None

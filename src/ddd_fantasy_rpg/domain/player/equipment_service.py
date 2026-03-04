@@ -1,9 +1,10 @@
 from typing import Dict
 
-from ddd_fantasy_rpg.domain.items.item import Item, ItemType
-from ddd_fantasy_rpg.domain.items.exeptions import CannotEquipItemError
+from ddd_fantasy_rpg.domain.items.item_type import ItemType
+from ddd_fantasy_rpg.domain.items.item_instance import ItemInstance
+from ddd_fantasy_rpg.domain.items.exceptions import CannotEquipItemError
 
-class EquiupmentSevice:
+class EquipmentService:
     """Доменный серсив для управления экиписровкой"""
     
     # Конфигурация маппинга типов предметов на слоты
@@ -13,16 +14,18 @@ class EquiupmentSevice:
         ItemType.HELMET: "helmet",
         ItemType.RING: "ring",
         ItemType.BOOTS: "boots",
+        ItemType.POTION: "consumable",
+        ItemType.POTION: "consumable"
     }
     
     @classmethod
     def get_slot_for_item_type(cls, item_type: ItemType) -> str:
         """Возвращает слот для данного предмета."""
         if item_type not in cls._SLOT_MAPPING:
-            raise CannotEquipItemError(f"Cannot quip item type")
+            raise CannotEquipItemError(f"Cannot quip item type: {item_type.value}")
         return cls._SLOT_MAPPING[item_type]
     
     @classmethod
-    def can_equip_item(cls, player_level: int, item: Item) -> bool:
+    def can_equip_item(cls, player_level: int, item: ItemInstance) -> bool:
         """Проверят, может ли игрок экипироваь предмет."""
-        return item.level_required <= player_level
+        return item <= player_level

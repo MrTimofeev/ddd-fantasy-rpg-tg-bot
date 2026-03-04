@@ -2,7 +2,7 @@ from typing import Dict, Optional
 
 from ddd_fantasy_rpg.domain.battle.combatant import Combatant, CombatantType
 
-from ddd_fantasy_rpg.domain.battle.exeptions import (
+from ddd_fantasy_rpg.domain.battle.exceptions import (
     CombatantNotAliveError,
     CombatantNotInBattleError,
     NotYourTurnError,
@@ -112,11 +112,11 @@ class Battle:
             return result
 
         elif action.action_type == BattleActionType.USE_SKILL:
-            if not action.skill_name:
-                raise ValueError("Skill name is required")
+            if not action.skill_id:
+                raise ValueError("Skill ID is required")
 
             result = battle_mechanics.perform_skill_use(
-                actor, action.skill_name)
+                actor, action.skill_id)
             if result.success and result.damage:
                 opponent.take_damage(result.damage)
             elif result.success and result.heal:

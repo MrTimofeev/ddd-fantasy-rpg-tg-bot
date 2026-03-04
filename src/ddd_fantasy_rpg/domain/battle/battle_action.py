@@ -13,6 +13,6 @@ class BattleActionType(Enum):
 @dataclass
 class BattleAction:
     action_type: BattleActionType
-    skill_name: Optional[str] = None
+    skill_id: Optional[str] = None
     item_name: Optional[str] = None
 

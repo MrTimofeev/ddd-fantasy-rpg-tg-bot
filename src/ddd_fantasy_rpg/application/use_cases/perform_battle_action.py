@@ -5,7 +5,7 @@ from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult
 from ddd_fantasy_rpg.domain.battle.battle_action_result import AttackResult, FleeResult, ItemUseResult, SkillUseResult
-from ddd_fantasy_rpg.domain.battle.exeptions import BattleNotFoundError, BattleAlreadyFinishedError
+from ddd_fantasy_rpg.domain.battle.exceptions import BattleNotFoundError, BattleAlreadyFinishedError
 
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.application.use_cases.complete_battle import CompleteBattleUseCase

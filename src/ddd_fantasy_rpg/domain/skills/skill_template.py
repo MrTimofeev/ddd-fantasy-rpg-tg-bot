@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any
 
 from ddd_fantasy_rpg.domain.skills.skill_type import SkillType
@@ -15,8 +15,8 @@ class SkillTemplate:
     level_required: int
     description: str = ""
     
-    # Дополнительные параметры для разнытих типов килоов
-    additional_params: Dict[str, Any] = None
+    # Дополнительные параметры для разных типов килоов
+    additional_params: Dict[str, Any] = field(default_factory=dict)
     
     @classmethod
     def from_dict(cls, data: Dict) -> "SkillTemplate":

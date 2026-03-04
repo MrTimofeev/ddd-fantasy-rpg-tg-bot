@@ -9,3 +9,5 @@ class ItemType(Enum):
     RESOURCE = "resource"
     RING = "ring"
     BOOTS = "boots"
+    POTION = "potion"
+    SCROLL = "scroll"

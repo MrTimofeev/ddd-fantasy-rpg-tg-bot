@@ -30,7 +30,7 @@ class StatsCalculationService:
     }
     
     @classmethod
-    def calculate_base_stats(cls, race: Race, progfession: PlayerClass) -> Dict[str, int]:
+    def calculate_base_stats(cls, race: Race, profession: PlayerClass) -> Dict[str, int]:
         """Рассчитываем базовые статы для игрока."""
         stats = cls._BASE_STATS.copy()
         
@@ -40,7 +40,7 @@ class StatsCalculationService:
             stats[stat] += bonus
             
         # Применяем бонусы класса
-        class_bonuses = cls._CLASS_BONUSES.get(progfession, {})
+        class_bonuses = cls._CLASS_BONUSES.get(profession, {})
         for stat, bonus in class_bonuses.items():
             stats[stat] += bonus
             

@@ -40,5 +40,5 @@ class ItemUseResult(BattleActionResult):
     action_type: BattleActionType
     success: bool
     item_name: str
-    daetails: str = ""
+    details: str = ""
 

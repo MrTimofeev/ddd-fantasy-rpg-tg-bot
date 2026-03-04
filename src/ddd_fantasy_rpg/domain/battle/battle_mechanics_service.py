@@ -1,28 +1,31 @@
 from typing import Dict
 
 from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
-from ddd_fantasy_rpg.domain.skills.skill import SkillType
+from ddd_fantasy_rpg.domain.skills import SkillType
 from ddd_fantasy_rpg.domain.battle.combatant import Combatant
 from ddd_fantasy_rpg.domain.battle.battle_action import BattleActionType
 from ddd_fantasy_rpg.domain.battle.battle_action_result import (
     AttackResult, FleeResult, SkillUseResult, ItemUseResult
 )
-from ddd_fantasy_rpg.domain.skills.exeptions import SkillNotAvailableError, SkillOnCooldownError
+from ddd_fantasy_rpg.domain.skills.exceptions import SkillNotAvailableError, SkillOnCooldownError
 
 
 class BattleMechanicsService:
     """Доменный сервис для боевой механики."""
 
-    def __init__(self, randome_provider: RandomProvider):
-        self._random = randome_provider
+    def __init__(self, random_provider: RandomProvider):
+        self._random = random_provider
 
     def calculate_base_damage(self, attacker: Combatant) -> int:
         """Рассчитывает базовый урон."""
+        # TODO: Сделать учет класса
         return attacker.stats.strength
 
     def is_critical_hit(self, attacker: Combatant, defender: Combatant) -> bool:
         """Проверяет, является ли удар критическим."""
-
+        if defender.stats.agility + 10 == 0:
+            return False    
+    
         crit_chance = attacker.stats.agility / (defender.stats.agility + 10)
         return self._random.random() < min(crit_chance, 0.5)
 
@@ -58,12 +61,12 @@ class BattleMechanicsService:
         self,
         actor: Combatant,
         opponent: Combatant,
-        flee_atempts: Dict[str, int]
+        flee_attempts: Dict[str, int]
     ) -> FleeResult:
         """Выполняет попытку побега."""
 
-        current_attemts = flee_atempts.get(actor.id, 0)
-        can_flee = self.can_flee(actor, opponent, current_attemts)
+        current_attempts = flee_attempts.get(actor.id, 0)
+        can_flee = self.can_flee(actor, opponent, current_attempts)
 
         if can_flee:
             return FleeResult(
@@ -81,12 +84,11 @@ class BattleMechanicsService:
     def perform_skill_use(
         self,
         actor: Combatant,
-        skill_name: str
+        skill_id: str
     ) -> SkillUseResult:
         """Выполняет использование скилла."""
-
         try:
-            effect = actor.use_skill(skill_name)
+            effect = actor.use_skill(skill_id)
 
             if effect.skill_type == SkillType.DAMAGE:
                 return SkillUseResult(
@@ -135,5 +137,5 @@ class BattleMechanicsService:
             action_type=BattleActionType.USE_ITEM,
             success=True,
             item_name=item_name,
-            daetails=f"Usef item: {item_name}"
+            details=f"Used item: {item_name}"
         )

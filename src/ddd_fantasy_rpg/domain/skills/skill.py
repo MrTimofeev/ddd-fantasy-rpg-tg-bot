@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from ddd_fantasy_rpg.domain.skills.skill_type import SkillType
 
 
     

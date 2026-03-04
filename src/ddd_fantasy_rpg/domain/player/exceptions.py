@@ -26,7 +26,7 @@ class PlayerAlreadyOnExpeditionError(DomainError):
 
 class PlayerAlreadyExistingError(DomainError):
     """Игрок уже существует."""
-    def __ini__(self, player_id: str):
+    def __init__(self, player_id: str):
         self.player_id = player_id
         super().__init__(f"Player with ID {player_id} already exists")
         
