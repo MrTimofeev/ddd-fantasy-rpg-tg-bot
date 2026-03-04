@@ -10,6 +10,10 @@ class RandomProvider(ABC):
         raise NotImplementedError
     
     @abstractmethod
+    def choices(self, population, weights, k):
+        raise NotImplementedError
+    
+    @abstractmethod
     def random(self):
         raise NotImplementedError
 

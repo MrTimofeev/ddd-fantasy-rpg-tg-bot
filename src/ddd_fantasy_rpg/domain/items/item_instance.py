@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 from typing import Optional, Dict
 
 from ddd_fantasy_rpg.domain.items.item_type import ItemType
-from ddd_fantasy_rpg.domain.common.stats import CharacterStats
+from ddd_fantasy_rpg.domain.player.character_stats import CharacterStats
+from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
 
 
 @dataclass
@@ -15,19 +16,30 @@ class ItemInstance:
     item_type: ItemType
     stats: CharacterStats
     owner_id: Optional[str] = None
-    is_equipped: bool = False
-    slot: Optional[str] = None
     
-    # Дополнительные модификаторы (для уникальных предметов)
+    _is_equipped: bool = field(default=False, repr=False)
+    _slot: Optional[str] = field(default=None, repr=False)
     modifiers: Dict[str, int] = field(default_factory=dict)
     
     
-    def equip(self, slot_name: str) -> None:
-        if self.is_equipped:
-            return
-        self.is_equipped = True
-        self.slot = slot_name
+    @property 
+    def is_equipped(self) -> bool:
+        return self._is_equipped
     
-    def unequip(self) -> None:
-        self.is_equipped = False
-        self.slot = None
+    @property
+    def slot(self) -> Optional[str]:
+        return self._slot
+    
+    def equip(self, slot_name: str) -> None:
+        if self._is_equipped:
+            raise DomainError("Предмет уже экипирован в слот")
+        
+        self._is_equipped = True 
+        self._slot = slot_name
+        
+    def uneqip(self) -> None:
+        if not self._is_equipped:
+            raise DomainError("Предмет не экипирован")
+        self._is_equipped = False
+        self._slot = None
+        

@@ -3,49 +3,46 @@ from typing import Dict
 from ddd_fantasy_rpg.domain.player.race import Race
 from ddd_fantasy_rpg.domain.player.player_profession import PlayerClass
 
+from ddd_fantasy_rpg.domain.player.character_stats import CharacterStats
+
 
 class StatsCalculationService:
     """Доменный сервис для расчета базовых статов."""
     
     # Базовые статы для всех игроков
-    _BASE_STATS = {
-        "strength": 10,
-        "agility": 10, 
-        "intelligence": 10
+    _BASE_STATS: Dict[str, int] = {
+        'strength': 10,
+        'agility': 8,
+        'intelligence': 6,
+        'max_hp': 50,
+        'damage': 5,
+        'armor': 0,
     }
-    
+
     _RACE_BONUSES: Dict[Race, Dict[str, int]] = {
-        Race.HUMAN: {},
-        Race.ORC: {"strength":3},
-        Race.ELF: {"agility": 2, "intelligence": 1},
-        Race.DWARF: {"strength": 2, "agility": -1},
+        Race.HUMAN: {'strength': 1, 'agility': 1, 'intelligence': 1},
+        Race.ELF: {'agility': 2, 'intelligence': 1},
+        Race.ORC: {'strength': 3, 'max_hp': 10},
+        Race.DWARF: {'strength': 2, 'armor': 2},
     }
-    
-    # Бонус по классам
+
     _CLASS_BONUSES: Dict[PlayerClass, Dict[str, int]] = {
-        PlayerClass.WARRIOR: {"strength": 2},
-        PlayerClass.MAGE: {"intelligence": 3},
-        PlayerClass.ROGUE: {"agility": 3},
-        PlayerClass.PALADIN: {"intelligence": 2, "strength": 1}
+        PlayerClass.WARRIOR: {'strength': 3, 'max_hp': 15, 'armor': 2},
+        PlayerClass.MAGE: {'intelligence': 4, 'damage': 3},
+        PlayerClass.ROGUE: {'agility': 3, 'damage': 2},
+        PlayerClass.PALADIN: {'strength': 2, 'intelligence': 1, 'max_hp': 10, 'armor': 3},
     }
     
     @classmethod
-    def calculate_base_stats(cls, race: Race, profession: PlayerClass) -> Dict[str, int]:
-        """Рассчитываем базовые статы для игрока."""
-        stats = cls._BASE_STATS.copy()
+    def calculate_base_stats(cls, race: Race, profession: PlayerClass) -> CharacterStats:
+        stats_dict = cls._BASE_STATS.copy()
         
-        # Применяем бонусы расы
         race_bonuses = cls._RACE_BONUSES.get(race, {})
         for stat, bonus in race_bonuses.items():
-            stats[stat] += bonus
-            
-        # Применяем бонусы класса
+            stats_dict[stat] += bonus
+        
         class_bonuses = cls._CLASS_BONUSES.get(profession, {})
         for stat, bonus in class_bonuses.items():
-            stats[stat] += bonus
+            stats_dict[stat] += bonus
             
-        # Убедимся, что статы не уходят в минус
-        for stat in stats:
-            stats[stat] = max(1, stats[stat])
-            
-        return stats
+        return CharacterStats(**stats_dict)

@@ -1,141 +1,50 @@
-from typing import Dict
-
-from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
-from ddd_fantasy_rpg.domain.skills import SkillType
-from ddd_fantasy_rpg.domain.battle.combatant import Combatant
-from ddd_fantasy_rpg.domain.battle.battle_action import BattleActionType
-from ddd_fantasy_rpg.domain.battle.battle_action_result import (
-    AttackResult, FleeResult, SkillUseResult, ItemUseResult
-)
-from ddd_fantasy_rpg.domain.skills.exceptions import SkillNotAvailableError, SkillOnCooldownError
-
+from typing import Tuple, Optional
+from ...domain.battle.combatant import Combatant
+from ...domain.skills.skill import Skill
+from ...domain.skills.skill_type import SkillType
+from ...domain.common.random_provider import RandomProvider
 
 class BattleMechanicsService:
-    """Доменный сервис для боевой механики."""
-
     def __init__(self, random_provider: RandomProvider):
-        self._random = random_provider
+        self._random_provider = random_provider
 
+    # --- Основные вычисления ---
     def calculate_base_damage(self, attacker: Combatant) -> int:
-        """Рассчитывает базовый урон."""
-        # TODO: Сделать учет класса
-        return attacker.stats.strength
+        # Пример: базовый урон + 50% от силы
+        return attacker.stats.damage + int(attacker.stats.strength * 0.5)
 
     def is_critical_hit(self, attacker: Combatant, defender: Combatant) -> bool:
-        """Проверяет, является ли удар критическим."""
-        if defender.stats.agility + 10 == 0:
-            return False    
-    
+        # Пример: шанс крита зависит от ловкости
         crit_chance = attacker.stats.agility / (defender.stats.agility + 10)
-        return self._random.random() < min(crit_chance, 0.5)
+        roll = self._random_provider.random() # 0.0 to 1.0
+        return roll < crit_chance
 
     def can_flee(self, fleeing: Combatant, opponent: Combatant, flee_attempts: int) -> bool:
-        """Проверяет, может ли боец сбежать."""
-        base_chance = 0.3 + (flee_attempts * 0.2)
+        # Пример формулы
+        base_chance = 0.3 - (flee_attempts * 0.2)
         agility_factor = fleeing.stats.agility / (opponent.stats.agility + 1)
-        total_chance = min(base_chance * agility_factor, 0.9)
-        return self._random.random() < total_chance
+        total_chance = min(max(base_chance * agility_factor, 0.05), 0.9) # Мин. 5%, макс. 90%
+        roll = self._random_provider.random()
+        return roll < total_chance
 
-    def perform_attack(
-        self,
-        actor: Combatant,
-        opponent: Combatant,
-        flee_attempts: Dict[str, int]
-    ) -> AttackResult:
-        """Выполняет аттаку."""
-        damage = self.calculate_base_damage(actor)
-        is_critical = self.is_critical_hit(actor, opponent)
+    # --- Вычисления для действий (возвращают результаты, не меняя состояние) ---
+    def calculate_damage_and_crit(self, attacker: Combatant, defender: Combatant) -> Tuple[int, bool]:
+        base_damage = self.calculate_base_damage(attacker)
+        is_critical = self.is_critical_hit(attacker, defender)
+        damage = base_damage if not is_critical else int(base_damage * 1.5)
+        effective_damage = max(1, damage - defender.stats.armor)
+        return effective_damage, is_critical
 
-        if is_critical:
-            damage = int(damage * 1.5)
+    def calculate_skill_effect(self, skill: Skill, caster: Combatant, target: Optional[Combatant] = None) -> Tuple[SkillType, int, Optional[str]]:
+        effect_value = skill.base_power
+        if skill.skill_type == SkillType.DAMAGE:
+            stat_bonus = caster.stats.intelligence if caster.combatant_type == "PLAYER" else caster.stats.strength
+            effect_value += int(stat_bonus * 0.3)
+        elif skill.skill_type == SkillType.HEAL:
+            stat_bonus = caster.stats.intelligence if caster.combatant_type == "PLAYER" else caster.stats.strength
+            effect_value += int(stat_bonus * 0.2)
 
-        return AttackResult(
-            action_type=BattleActionType.ATTACK,
-            success=True,
-            damage=damage,
-            is_critical=is_critical,
-            details="Critical hit!" if is_critical else ""
-        )
+        return skill.skill_type, effect_value, None
 
-    def perform_flee(
-        self,
-        actor: Combatant,
-        opponent: Combatant,
-        flee_attempts: Dict[str, int]
-    ) -> FleeResult:
-        """Выполняет попытку побега."""
-
-        current_attempts = flee_attempts.get(actor.id, 0)
-        can_flee = self.can_flee(actor, opponent, current_attempts)
-
-        if can_flee:
-            return FleeResult(
-                action_type=BattleActionType.FLEE,
-                success=True,
-                details="Flee successfully!"
-            )
-        else:
-            return FleeResult(
-                action_type=BattleActionType.FLEE,
-                success=False,
-                details="Failed to flee!"
-            )
-
-    def perform_skill_use(
-        self,
-        actor: Combatant,
-        skill_id: str
-    ) -> SkillUseResult:
-        """Выполняет использование скилла."""
-        try:
-            effect = actor.use_skill(skill_id)
-
-            if effect.skill_type == SkillType.DAMAGE:
-                return SkillUseResult(
-                    action_type=BattleActionType.USE_SKILL,
-                    success=True,
-                    skill_name=effect.skill_name,
-                    damage=effect.effect_value,
-                    heal=None,
-                    details=f"Used {effect.skill_name} for {effect.effect_value} damage"
-                )
-            elif effect.skill_type == SkillType.HEAL:
-                return SkillUseResult(
-                    action_type=BattleActionType.USE_SKILL,
-                    success=True,
-                    skill_name=effect.skill_name,
-                    damage=None,
-                    heal=effect.effect_value,
-                    details=f"Used {effect.skill_name} and healed for {effect.effect_value} HP!"
-                )
-            else:
-                return SkillUseResult(
-                    action_type=BattleActionType.USE_SKILL,
-                    success=False,
-                    skill_name=effect.skill_name,
-                    damage=None,
-                    heal=None,
-                    details=f"Unknown skill effect: {effect.skill_type.value}"
-                )
-        except (SkillOnCooldownError, SkillNotAvailableError) as e:
-            return SkillUseResult(
-                action_type=BattleActionType.USE_SKILL,
-                success=False,
-                skill_name=skill_name,
-                damage=None,
-                heal=None,
-                details=str(e)
-            )
-            
-    def perform_item_use(
-        self,
-        item_name: str
-    ) -> ItemUseResult:
-        """Выполняет использование предмета"""
-        # TODO: Реализовать логику предметов
-        return ItemUseResult(
-            action_type=BattleActionType.USE_ITEM,
-            success=True,
-            item_name=item_name,
-            details=f"Used item: {item_name}"
-        )
+    def calculate_flee_success(self, fleeing: Combatant, opponent: Combatant, flee_attempts: int) -> bool:
+        return self.can_flee(fleeing, opponent, flee_attempts)

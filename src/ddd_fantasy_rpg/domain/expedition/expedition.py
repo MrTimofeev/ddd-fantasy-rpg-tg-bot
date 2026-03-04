@@ -1,3 +1,4 @@
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
@@ -5,10 +6,9 @@ from typing import Optional
 from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter, MonsterEncounter, TraderEncounter, ResourceGathering
 from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
 from ddd_fantasy_rpg.domain.expedition.expedition_status import ExpeditionStatus
-from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
-from ddd_fantasy_rpg.domain.expedition.exeptions import ExpeditionNotActiveError
-
-
+from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
+from ddd_fantasy_rpg.domain.common.domain_event import DomainEvent
+from ddd_fantasy_rpg.domain.expedition.events import ExpeditionStarted, ExpeditionCompleted
 
 
 @dataclass
@@ -17,64 +17,69 @@ class Expedition:
     player_id: str
     distance: ExpeditionDistance
     start_time: datetime
-    end_time: datetime
-    status: ExpeditionStatus = ExpeditionStatus.NO_ACTIVE
+    planned_end_time: datetime
+    status: ExpeditionStatus = ExpeditionStatus.ACTIVE
     outcome: Optional[ExpeditionEvent] = None
+    _travel_completed_at: Optional[datetime] = None
 
     def __post_init__(self):
-        if self.end_time <= self.start_time:
-            raise ValueError("End time must be after start time")
+        if self.status == ExpeditionStatus.ACTIVE and self.outcome is None:
+            raise DomainError(
+                f"Активная экспедиция {self.id} должна иметь запланированный результат.")
+            
+        self._pending_events: deque[DomainEvent] = deque()
+        start_events = ExpeditionStarted(expedition_id=self.id, player_id=self.player_id)
+        self._pending_events.append(start_events)
+        
 
-    @classmethod
-    def start_for(
-        cls,
-        expedition_id: str,
-        player_id: str,
-        distance: ExpeditionDistance,
-        event: ExpeditionEvent,
-        time_provider: TimeProvider
-    ) -> "Expedition":
-        now = time_provider.now()
-        end = now + timedelta(minutes=distance.duration_minutes)
-        return cls(
-            id=expedition_id,
-            player_id=player_id,
-            distance=distance,
-            start_time=now,
-            end_time=end,
-            status=ExpeditionStatus.ACTIVE,
-            outcome=event
-        )
+    @property
+    def is_active(self) -> bool:
+        return self.status == ExpeditionStatus.ACTIVE
 
-    def is_finished(self, time_provider: TimeProvider) -> bool:
-        return time_provider.now() >= self.end_time
+    @property
+    def is_travel_completed(self) -> bool:
+        return self._travel_completed_at is not None
 
-    def interrupt_for_duel(self, opponent_player_id: str) -> None:
-        """Прерывает вылазку для дуэли"""
+    @property
+    def is_completed(self) -> bool:
+        return self.status == ExpeditionStatus.COMPLETED
+
+    @property
+    def is_pvp(self) -> bool:
+        return self.outcome is not None and isinstance(self.outcome, PlayerDuelEncounter)
+
+    def is_finished(self, current_time: datetime) -> bool:
+        if self._travel_completed_at is not None:
+            return True
+
+        if current_time >= self.planned_end_time:
+            self._travel_completed_at = current_time
+            return True
+
+        return False
+
+    def complete_travel(self, outcome: ExpeditionEvent) -> None:
         if self.status != ExpeditionStatus.ACTIVE:
-            raise ExpeditionNotActiveError()
-        self.outcome = PlayerDuelEncounter(
-            opponent_player_id=opponent_player_id)
+            raise DomainError(
+                f"Невозможно завершить путешествие для экспедиции {self.id}. Она неактивна (статус: {self.status.value}).")
+        if self._travel_completed_at is None:
+            raise DomainError(
+                f"Согласно `is_finished`, поездка для экспедиции {self.id} еще не завершена.")
+        pass
 
-    def complete(self) -> None:
-        """Завершаем вылазку"""
+    def confirm_event_processed(self) -> None:
+        if not self.is_travel_completed:
+            raise DomainError(
+                f"Невозможно подтвердить обработку события для экспедиции {self.id}. Путешествие еще не завершено.")
+
         self.status = ExpeditionStatus.COMPLETED
         
-    
-    def start_event(self, event) -> None:
-        """Начинает событие, устанавливает статуст в зависимости от события"""
-        if isinstance(event, MonsterEncounter):
-            self.status = ExpeditionStatus.PVE
-        elif isinstance(event, PlayerDuelEncounter):
-            self.status = ExpeditionStatus.PVP
-        elif isinstance(event, TraderEncounter):
-            self.status = ExpeditionStatus.TRADER
-        elif isinstance(event, ResourceGathering):
-            self.status = ExpeditionStatus.RESOURCE
-        else:
-            raise ValueError("Неизвестное событие")
-    
-    def complete_event(self) -> None:
-        """Завершает событие"""
-        self.status = ExpeditionStatus.NO_ACTIVE
+        completion_event = ExpeditionCompleted(expedition_id=self.id, player_id=self.player_id, outcome=self.outcome)
+        
+    def pop_pending_events(self) -> list[DomainEvent]:
+        events = list(self._pending_events)
+        self._pending_events.clear()
+        return events
 
+    def __repr__(self) -> str:
+        return f"<Expedition id={self.id} player_id={self.player_id} status={self.status.value} planned_end={self.planned_end_time}>"

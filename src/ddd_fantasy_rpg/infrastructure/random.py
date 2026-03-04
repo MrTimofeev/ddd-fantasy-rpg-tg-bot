@@ -12,3 +12,7 @@ class SystemRandomProvider(RandomProvider):
  
     def random(self):
         return random.random()   
+
+    
+    def choices(self, population, weights, k):
+        return random.choices(population=population, weights=weights, k=k)
