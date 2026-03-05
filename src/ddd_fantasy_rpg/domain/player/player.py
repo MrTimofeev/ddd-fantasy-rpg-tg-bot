@@ -12,7 +12,7 @@ from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
 
 from ddd_fantasy_rpg.domain.player.race import Race
 from ddd_fantasy_rpg.domain.player.player_profession import PlayerClass
-from ddd_fantasy_rpg.domain.player.events import PlayerGainedExperience, PlayerLevelUp
+from ddd_fantasy_rpg.domain.player.events import PlayerGainedExperience, PlayerLevelUp, PlayerDied
 from ddd_fantasy_rpg.domain.common.domain_event import DomainEvent
 
 
@@ -80,6 +80,9 @@ class Player:
 
         self._is_dead = True
         self._death_timestamp = datetime.now(timezone.utc)
+
+        death_event = PlayerDied(player_id=self.id)
+        self._pending_events.append(death_event)
 
     def try_respawn(self, time_provider) -> bool:
         if not self._is_dead:
