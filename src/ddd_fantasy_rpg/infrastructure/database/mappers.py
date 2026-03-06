@@ -1,17 +1,26 @@
 from typing import Optional, Dict, Any
 from datetime import timezone
 
-from ddd_fantasy_rpg.domain import (
-    Player, Race, PlayerClass,
-    Expedition, ExpeditionDistance, PlayerDuelEncounter, ExpeditionStatus,
-    Item, 
-    Battle, ItemType, ItemStats, Combatant, CombatantType, CombatantStats,
-    Monster, MonsterEncounter
-    )
-from ddd_fantasy_rpg.infrastructure.database.models import PlayerORM, ExpeditionORM, BattleORM
+from ddd_fantasy_rpg.domain.player.player import Player
+from ddd_fantasy_rpg.domain.player.race import Race
+from ddd_fantasy_rpg.domain.player.player_profession import PlayerClass
+from ddd_fantasy_rpg.domain.player.character_stats import CharacterStats
+from ddd_fantasy_rpg.domain.player.inventory import Inventory
+from ddd_fantasy_rpg.domain.player.equipment import Equipment
+from ddd_fantasy_rpg.domain.expedition.expedition import Expedition
+from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
+from ddd_fantasy_rpg.domain.expedition.expedition_event import PlayerDuelEncounter, MonsterEncounter
+from ddd_fantasy_rpg.domain.expedition.expedition_status import ExpeditionStatus
+from ddd_fantasy_rpg.domain.items.item_instance import ItemInstance
+from ddd_fantasy_rpg.domain.items.item_type import ItemType
+from ddd_fantasy_rpg.domain.items.item_stats import ItemStats
+from ddd_fantasy_rpg.domain.battle.battle import Battle
+from ddd_fantasy_rpg.domain.battle.combatant import Combatant, CombatantType
+from ddd_fantasy_rpg.domain.monster.monster import Monster
+from ddd_fantasy_rpg.infrastructure.database.models import PlayerORM, ExpeditionORM, BattleORM, PlayerItemORM, PlayerStatsORM
 
 # === Вспомогательные функции для Item ===
-def _item_to_dict(item: Item) -> Dict[str, Any]:
+def _item_to_dict(item: ItemInstance) -> Dict[str, Any]:
     return {
         "name": item.name,
         "item_type": item.item_type.value,
@@ -27,8 +36,8 @@ def _item_to_dict(item: Item) -> Dict[str, Any]:
     }
 
 
-def _item_from_dict(data: Dict[str, Any]) -> Item:
-    return Item(
+def _item_from_dict(data: Dict[str, Any]) -> ItemInstance:
+    return ItemInstance(
         name=data["name"],
         item_type=ItemType(data["item_type"]),
         level_required=data["level_required"],
@@ -45,45 +54,106 @@ def _item_from_dict(data: Dict[str, Any]) -> Item:
 
 # === Player Mapper ===
 def player_to_orm(player: Player) -> PlayerORM:
-    inventory_data = [_item_to_dict(item) for item in player.inventory]
-
-    equipped_data = {}
-    for slot, item in player._equipped.items():
-        equipped_data[slot] = _item_to_dict(item)
-
-    return PlayerORM(
+    orm_player = PlayerORM(
         id=player.id,
-        telegram_id=player._telegram_id,
-        name=player._name,
-        race=player._race.value,
-        player_profession=player._profession.value,
-        level=player._level,
-        exp=player._exp,
-        inventory=inventory_data,
-        equipped=equipped_data,
-        base_stats=player._base_stats,
+        telegram_id=player.telegram_id,
+        name=player.name,
+        race=player.race.value, # Сохраняем значение enum
+        player_profession=player.profession.value,
+        level=player.level,
+        exp=player.exp
     )
+
+    
+    stats = player.get_base_stats()
+    orm_stats = PlayerStatsORM(
+        player_id=player.id,
+        strength=stats.strength,
+        agility=stats.agility,
+        intelligence=stats.intelligence,
+        max_hp=stats.max_hp,
+        damage=stats.damage,
+        armor=stats.armor
+    )
+    orm_player.stats = orm_stats
+    
+    for item in player.get_inventory_items():
+        orm_item = PlayerItemORM(
+            id=item.id,
+            player_id=player.id,
+            template_id=item.template_id,
+            name=item.name,
+            item_type=item.item_type.value,
+            stats_json={
+                "strength": item.stats.strength,
+                "agility": item.stats.agility,
+                "intelligence": item.stats.intelligence,
+                "max_hp": item.stats.max_hp,
+                "damage": item.stats.damage,
+            }, 
+            is_equipped=item.is_equipped,
+            slot_name=item.slot,
+            modifiers_json=item.modifiers
+        )
+        orm_player.items.append(orm_item)
+    
+    return orm_player
 
 
 def player_from_orm(orm: PlayerORM) -> Player:
-    inventory = [_item_from_dict(item_data)
-                 for item_data in (orm.inventory or [])]
-
-    equipped = {}
-    for slot, item_data in (orm.equipped or {}).items():
-        equipped[slot] = _item_from_dict(item_data)
-
+    # 1. Восстанавливаем статы
+    base_stats = CharacterStats(
+        strength=orm.stats.strength,
+        agility=orm.stats.agility,
+        intelligence=orm.stats.intelligence,
+        max_hp=orm.stats.max_hp,
+        damage=orm.stats.damage,
+        armor=orm.stats.armor
+    )
+    
+    
     player = Player.__new__(Player)
-    player._id = orm.id
-    player._telegram_id = orm.telegram_id
-    player._name = orm.name
-    player._race = Race(orm.race)
-    player._profession = PlayerClass(orm.player_profession)
-    player._level = orm.level
-    player._exp = orm.exp
-    player._inventory = inventory
-    player._equipped = equipped
-    player._base_stats = orm.base_stats
+    player.id = orm.id
+    player.telegram_id = orm.telegram_id
+    player.name = orm.name
+    player.race = Race(orm.race)
+    player.profession = PlayerClass(orm.player_profession)
+    player.level = orm.level
+    player.exp = orm.exp
+    player.base_stats = base_stats
+    
+    player._current_hp = base_stats.max_hp
+    
+    player._inventory = Inventory()
+    player._equipment = Equipment()
+    player._is_dead = False
+    player._death_timestamp = None
+    player._pending_events = []
+    
+    for orm_item in orm.items:
+        item_stats = CharacterStats(**orm_item.stats_json)
+        
+        item = ItemInstance(
+            id=orm_item.id,
+            name=orm_item.name,
+            template_id=orm_item.template_id,
+            level_required=0, # Нужно сохранить в БД если важно
+            item_type=ItemType(orm_item.item_type),
+            stats=item_stats,
+            owner_id=orm.id,
+            modifiers=orm_item.modifiers_json or {}
+        )
+    
+    
+        if orm_item.is_equipped and orm_item.slot_name:
+            # Восстанавливаем внутреннее состояние предмета
+            item._is_equipped = True
+            item._slot = orm_item.slot_name
+            player._inventory.add_item(item)
+            setattr(player._equipment, orm_item.slot_name, item)
+        else:
+            player._inventory.add_item(item)
+            
     return player
 
 
@@ -109,7 +179,7 @@ def _combatant_from_dict(data: Dict[str, Any]) -> Combatant:
         id=data["id"],
         name=data["name"],
         combatant_type=CombatantType(data["combatant_type"]),
-        stats=CombatantStats(
+        stats=CharacterStats(
             strength=data["stats"]["strength"],
             agility=data["stats"]["agility"],
             intelligence=data["stats"]["intelligence"],
