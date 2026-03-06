@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ddd_fantasy_rpg.domain.expedition import Expedition
+    from ddd_fantasy_rpg.domain.expedition.expedition import Expedition
 
 
 class ExpeditionRepository(ABC):

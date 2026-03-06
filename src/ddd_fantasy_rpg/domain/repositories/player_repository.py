@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ddd_fantasy_rpg.domain.player import Player
+    from ddd_fantasy_rpg.domain.player.player import Player
 
 class PlayerRepository(ABC):
     @abstractmethod

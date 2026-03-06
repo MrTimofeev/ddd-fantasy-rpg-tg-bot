@@ -5,9 +5,11 @@ class ItemType(Enum):
     WEAPON = "weapon"
     ARMOR = "armor"
     HELMET = "helmet"
-    CONSUMABLE = "consumable"
-    RESOURCE = "resource"
     RING = "ring"
     BOOTS = "boots"
+    
     POTION = "potion"
     SCROLL = "scroll"
+    CONSUMABLE = "consumable"
+
+    RESOURCE = "resource"
