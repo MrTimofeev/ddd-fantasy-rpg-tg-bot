@@ -2,9 +2,9 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
-from ddd_fantasy_rpg.domain.battle import BattleAction, BattleActionType
+from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleTurnResult
-from ddd_fantasy_rpg.domain.common import DomainError
+from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
 
 
 router = Router()
@@ -23,10 +23,9 @@ async def handle_battle_attack(
         return
     
     try:
-        async with dependencies.unit_of_work() as uow:
-            action = BattleAction(action_type=BattleActionType.ATTACK)
-            result = await dependencies.perform_battle_action_use_case.execute(player_id, action, uow)
-            await _send_battle_result(callback, result, dependencies, player_id)
+        action = BattleAction(action_type=BattleActionType.ATTACK)
+        result = await dependencies.perform_battle_action_use_case.execute(player_id, action)
+        await _send_battle_result(callback, result, dependencies, player_id)
     except DomainError as e:
         await callback.answer(str(e), show_alert=True)
     except Exception as e:

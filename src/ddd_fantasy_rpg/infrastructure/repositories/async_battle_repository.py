@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from ddd_fantasy_rpg.domain.battle import Battle
+from ddd_fantasy_rpg.domain.battle.battle import Battle
 from ddd_fantasy_rpg.domain.repositories.battle_repository import BattleRepository
 from ddd_fantasy_rpg.infrastructure.database.models import BattleORM
 from ddd_fantasy_rpg.infrastructure.database.mappers import battle_to_orm, battle_from_orm

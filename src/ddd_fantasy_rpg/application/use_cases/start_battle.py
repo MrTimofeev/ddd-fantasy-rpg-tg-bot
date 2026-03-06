@@ -1,13 +1,15 @@
 import uuid
 
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
-from ddd_fantasy_rpg.domain import Monster, Battle, Player
+from ddd_fantasy_rpg.domain.monster.monster import Monster
+from ddd_fantasy_rpg.domain.battle.battle import Battle
+from ddd_fantasy_rpg.domain.player.player import Player
 from ddd_fantasy_rpg.domain.battle.combatant_factory import (
     create_combatant_from_player,
     create_combatant_from_monster,
 )
 
-from ddd_fantasy_rpg.domain.player import PlayerNotFoundError, PlayerAlreadyInBattleError, SelfDuelError
+from ddd_fantasy_rpg.domain.player.exceptions import PlayerNotFoundError, PlayerAlreadyInBattleError, SelfDuelError
 from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 
 

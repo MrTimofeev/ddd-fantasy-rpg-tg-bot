@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from ddd_fantasy_rpg.domain.items.item import Item
+from ddd_fantasy_rpg.domain.items.item_instance import ItemInstance
 
 
 @dataclass(frozen=True)
@@ -10,7 +10,7 @@ class Monster:
     level: int
     base_damage: int
     max_hp: int
-    drop_items: List[Item]
+    drop_items: List[ItemInstance]
     flee_difficulty: int # влияет на шас побега (1-100)
     
     def __post_init__(self):

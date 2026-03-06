@@ -1,6 +1,6 @@
 from typing import Optional, Dict
 
-from ddd_fantasy_rpg.domain.player import Player
+from ddd_fantasy_rpg.domain.player.player import Player
 from ddd_fantasy_rpg.domain.repositories.player_repository import PlayerRepository
 
 class InMemoryPlayerRepository(PlayerRepository):

@@ -1,7 +1,8 @@
-from ddd_fantasy_rpg.domain.common import UnitOfWork
-from ddd_fantasy_rpg.domain import Battle, PlayerDuelEncounter
+from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.battle.battle import Battle
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, PlayerVictory, MonsterVictory, PvpVictory
-from ddd_fantasy_rpg.domain import BattleAlreadyFinishedError, PlayerNotFoundError
+from ddd_fantasy_rpg.domain.battle.exceptions import BattleAlreadyFinishedError
+from ddd_fantasy_rpg.domain.player.exceptions import  PlayerNotFoundError
 
 
 class CompleteBattleUseCase:
@@ -9,6 +10,7 @@ class CompleteBattleUseCase:
     Use Case для заверешния битвы. 
     """
 
+    
     async def complete_pve_battle(
         self,
         battle: Battle,

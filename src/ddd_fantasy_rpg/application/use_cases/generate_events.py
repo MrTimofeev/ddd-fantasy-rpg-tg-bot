@@ -1,4 +1,4 @@
-from ddd_fantasy_rpg.domain.common import RandomProvider
+from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 from ddd_fantasy_rpg.domain.expedition.expedition_event_generator import generate_monster_for_distance
 from ddd_fantasy_rpg.domain.expedition.expedition_event import MonsterEncounter, ExpeditionEvent, PlayerDuelEncounter
 from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance

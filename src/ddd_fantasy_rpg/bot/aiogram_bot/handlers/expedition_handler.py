@@ -3,7 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
-from ddd_fantasy_rpg.domain.expedition import ExpeditionDistance
+from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
 
 router = Router()
 

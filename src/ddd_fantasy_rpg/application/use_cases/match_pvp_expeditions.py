@@ -2,8 +2,8 @@ import asyncio
 from typing import List, Tuple
 from collections import defaultdict
 
-from ddd_fantasy_rpg.domain.expedition import Expedition
-from ddd_fantasy_rpg.domain.player import Player
+from ddd_fantasy_rpg.domain.expedition.expedition import Expedition
+from ddd_fantasy_rpg.domain.player.player import Player
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 
 

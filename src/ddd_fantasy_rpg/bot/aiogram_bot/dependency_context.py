@@ -24,8 +24,3 @@ class DependencyContext:
     notification_service: NotificationService
     message_formatter: BattleMessageFormatter
 
-    unit_of_work_factory: Callable[[], UnitOfWork]
-
-    def unit_of_work(self):
-        """Фабричный метод создания Unif of Work."""
-        return self.unit_of_work_factory()

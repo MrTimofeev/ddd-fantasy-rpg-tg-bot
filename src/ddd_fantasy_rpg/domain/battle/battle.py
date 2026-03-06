@@ -13,7 +13,6 @@ from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, BattlePart
 from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
 from ddd_fantasy_rpg.domain.battle.battle_action_result import BattleActionResult, AttackResult, FleeResult, ItemUseResult, SkillUseResult
 
-from ddd_fantasy_rpg.domain.battle.battle_mechanics_service import BattleMechanicsService
 from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
 
@@ -132,7 +131,7 @@ class Battle:
         return result
 
     def _perform_attack(self, actor: Combatant, opponent: Combatant) -> AttackResult:
-        damage, is_critical = self._culculate_damage_and_crit(actor, opponent)
+        damage, is_critical = self._calculate_damage_and_crit(actor, opponent)
         opponent.take_damage(damage)
 
         details = f"{actor.name} attacks {opponent.name} for {damage} damage." + \

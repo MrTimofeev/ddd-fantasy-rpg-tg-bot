@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from ddd_fantasy_rpg.domain.monster import Monster
+from ddd_fantasy_rpg.domain.monster.monster import Monster
 
 
 class ExpeditionEvent:

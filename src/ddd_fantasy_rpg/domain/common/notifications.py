@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult
-from ddd_fantasy_rpg.domain.player import Player
+from ddd_fantasy_rpg.domain.player.player import Player
 
 
 class NotificationService(ABC):
@@ -55,3 +55,11 @@ class NotificationService(ABC):
         """Уведомляет игроков о завершении боя."""
         raise NotImplementedError
     
+    
+    @abstractmethod
+    async def notify_create_player(
+        self,
+        player: Player,
+    ) -> None:
+        """Уведомляет игрока о создании персонажа"""
+        raise NotImplementedError

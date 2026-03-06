@@ -4,7 +4,7 @@ from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from ddd_fantasy_rpg.domain import Expedition
+from ddd_fantasy_rpg.domain.expedition.expedition import Expedition
 from ddd_fantasy_rpg.domain.repositories.expedition_repository import ExpeditionRepository
 from ddd_fantasy_rpg.infrastructure.database.models import ExpeditionORM
 from ddd_fantasy_rpg.infrastructure.database.mappers import expedition_to_orm, expedition_from_orm

@@ -1,8 +1,11 @@
 from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
 from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, MonsterEncounter, PlayerDuelEncounter, TraderEncounter, ResourceGathering
 
-from ddd_fantasy_rpg.domain.monster import Monster
-from ddd_fantasy_rpg.domain.items.item import Item, ItemType, ItemStats, Rarity
+from ddd_fantasy_rpg.domain.monster.monster import Monster
+from ddd_fantasy_rpg.domain.items.item_instance import ItemInstance
+from ddd_fantasy_rpg.domain.items.item_type import ItemType
+from ddd_fantasy_rpg.domain.items.item_stats import ItemStats
+from ddd_fantasy_rpg.domain.items.item_rarity import Rarity
 from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 
 def generate_monster_for_distance(distance: ExpeditionDistance, random_provider: RandomProvider) -> Monster:

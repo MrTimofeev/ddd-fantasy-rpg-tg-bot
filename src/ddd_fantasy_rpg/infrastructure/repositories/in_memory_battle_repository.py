@@ -1,6 +1,6 @@
 from typing import Optional, Dict
 
-from ddd_fantasy_rpg.domain.battle import Battle
+from ddd_fantasy_rpg.domain.battle.battle import Battle
 from ddd_fantasy_rpg.domain.repositories.battle_repository import BattleRepository
 
 

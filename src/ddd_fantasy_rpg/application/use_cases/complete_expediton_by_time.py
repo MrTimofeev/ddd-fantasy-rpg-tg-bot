@@ -1,6 +1,6 @@
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
-from ddd_fantasy_rpg.domain.expedition import ExpeditionNotFoundError, ExpeditionNotFinishedError
+from ddd_fantasy_rpg.domain.expedition.exceptions import ExpeditionNotFoundError, ExpeditionNotFinishedError
 
 class CompleteExpeditionByTimeUseCase:
     """Use case для завершения экспедиций по времени"""
