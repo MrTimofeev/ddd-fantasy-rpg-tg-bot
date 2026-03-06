@@ -43,3 +43,48 @@ class ItemInstance:
         self._is_equipped = False
         self._slot = None
         
+    def is_consumable(self) -> bool:
+        return self.item_type in [ItemType.POTION, ItemType.SCROLL, ItemType.CONSUMABLE]
+    
+    def is_equippable(self) -> bool:
+        return self.item_type in [ItemType.WEAPON, ItemType.ARMOR, ItemType.HELMET, ItemType.RING, ItemType.BOOTS]
+    
+    def is_resource(self) -> bool:
+        return self.item_type == ItemType.RESOURCE
+    
+    def use_consumable(self, context: dict) -> dict:
+        """
+        Базовая проверка пред использованием расходника.
+        Возвращает данные о том, какой эффект применить.
+        Сам эффект применяется в Player или BattleService.
+        """
+        
+        if not self.is_consumable():
+            raise DomainError(f"Предмет {self.name} не расходник")
+        
+        # TODO: сделать нормальный VO а не возвращать dict
+        if self.item_type == ItemType.POTION:
+            heal_amount = self.stats.max_hp if self.stats.max_hp > 0 else 50
+            return {
+                "action": "heal",
+                "value": heal_amount,
+                "source_item_id": self.id
+            }
+        elif self.item_type == ItemType.SCROLL:
+            if "Свиток Навыка" in self.name:
+                return {
+                    "action": "change_skill",
+                    "source_item_id": self.id
+                }
+            else:
+                # Другие свитки
+                return {
+                    "action": "неизвеснтное дейтсие",
+                    "source_item_id": self.id
+                }
+        
+        raise DomainError(f"Логика использования элемента {self.name} не реализована.")
+    
+        
+    def __repr__(self) -> str:
+        return f"ItemInstance(id={self.id}, name={self.name}, type={self.item_type.value})"
