@@ -3,6 +3,7 @@ from aiogram import Bot
 from ddd_fantasy_rpg.application.use_cases.perform_battle_action import BattleTurnResult
 from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, PlayerVictory, PvpVictory, MonsterVictory
+from ddd_fantasy_rpg.domain.expedition.expedition import Expedition
 from ddd_fantasy_rpg.domain.player.player import Player
 from ddd_fantasy_rpg.application.formatters.battle_formatter import BattleMessageFormatter
 from ddd_fantasy_rpg.bot.aiogram_bot.keyboards import get_battle_keyboard
@@ -163,6 +164,13 @@ class TelegramNotificationService(NotificationService):
         await self._bot.send_message(
             player.telegram_id,
             f"Создан персонаж: {player.name} ({player.profession.value})"
+        )
+        
+    async def notify_create_expedition(self, expedition: Expedition) -> None:
+        await self._bot.send_message(
+            expedition.player_id,
+             (f"Отправился в {expedition.distance.key} вылазку!\n"
+            f"Вернёшься через {expedition.distance.duration_minutes} мин.")
         )
 
         

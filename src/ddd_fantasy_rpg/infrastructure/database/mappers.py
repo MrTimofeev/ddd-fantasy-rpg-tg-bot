@@ -219,7 +219,7 @@ def expedition_to_orm(expedition: Expedition) -> ExpeditionORM:
         player_id=expedition.player_id,
         distance=expedition.distance.key,
         start_time=expedition.start_time,
-        end_time=expedition.end_time,
+        end_time=expedition.planned_end_time,
         outcome_type=outcome_type,
         outcome_data=outcome_data,
         status=expedition.status.value,
@@ -263,7 +263,7 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
         player_id=orm.player_id,
         distance=distance,
         start_time=start_time,
-        end_time=end_time,
+        planned_end_time=end_time,
         outcome=outcome,
         status=ExpeditionStatus(orm.status), 
     )
