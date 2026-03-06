@@ -1,45 +1,59 @@
 import uuid
+from datetime import timedelta
 
 from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
+from ddd_fantasy_rpg.domain.expedition.expedition_factory import ExpeditionFactory
 
-from ddd_fantasy_rpg.domain.player import PlayerNotFoundError, PlayerAlreadyOnExpeditionError
-from ddd_fantasy_rpg.domain.expedition import Expedition, ExpeditionDistance
-from ddd_fantasy_rpg.application.use_cases.generate_events import GenerateEventUseCase
+from ddd_fantasy_rpg.domain.player.exceptions import PlayerNotFoundError, PlayerAlreadyOnExpeditionError
+from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
+from ddd_fantasy_rpg.application.events.dispatcher import EventDispatcher
 
 
 class StartExpeditionUseCase:
     """
     Use Case для старта экспедиции.
     """
+
     def __init__(
         self,
-        generate_event_use_case: GenerateEventUseCase,
+        expedition_factory: ExpeditionFactory,
+        dispatcher: EventDispatcher,
         time_provider: TimeProvider,
+        uow: UnitOfWork,
     ):
-        self._generate_event_uc = generate_event_use_case
+        self._expedition_factory = expedition_factory
+        self._dispatcher = dispatcher
         self._time_provider = time_provider
-        
-    
-    async def execute(self, player_id: str, distance: ExpeditionDistance, uow: UnitOfWork):
-        player = await uow.players.get_by_id(player_id)
-        if player is None:
-            raise PlayerNotFoundError(player_id)
-        
-        active_expedition = await uow.expeditions.get_by_player_id(player_id)
-        if active_expedition and not active_expedition.is_finished(self._time_provider):
-            raise PlayerAlreadyOnExpeditionError(player_id)
-        
-        event = await self._generate_event_uc.execute(distance)
-        
-        expedition_id = str(uuid.uuid4())
-        
-        expedition = Expedition.start_for(
-            expedition_id=expedition_id,
-            player_id=player_id,
-            distance=distance,
-            event=event,
-            time_provider=self._time_provider
-        )
-        
-        await uow.expeditions.save(expedition)
+        self._uow = uow
+
+    async def execute(self, player_id: str, distance: ExpeditionDistance):
+        async with self._uow as uow:
+            player = await uow.players.get_by_id(player_id)
+            if player is None:
+                raise PlayerNotFoundError(player_id)
+
+            if not player.is_alive:
+                if not player.try_respawn(self._time_provider.now()):
+                    raise ValueError(
+                        "Вы мертвы. Дождитесь пока исчетет таймер воскрешения, чтобы начать экспедицию")
+
+                await uow.players.save(player)
+
+            active_expedition = await uow.expeditions.get_by_player_id(player_id)
+            if active_expedition and not active_expedition.is_finished(self._time_provider.now()):
+                raise PlayerAlreadyOnExpeditionError(player_id)
+
+            expedition = self._expedition_factory.create_new_expedition(
+                player_id=player_id,
+                distance=distance,
+            )
+
+            await uow.expeditions.save(expedition)
+
+            events_to_publish = expedition.pop_pending_events()
+
+        if events_to_publish:
+            await self._dispatcher.publish(events_to_publish)
+
+        return expedition

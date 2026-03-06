@@ -30,13 +30,8 @@ async def cmd_expedition(
 
     distance = getattr(ExpeditionDistance, distance_map[distance_str])
 
-    async with dependencies.unit_of_work() as uow:
-        try:
-            await dependencies.start_expedition_use_case.execute(str(message.from_user.id), distance, uow)
-            await message.answer(
-                f"Отправился в {distance_str} вылазку!\n"
-                f"Вернёшься через {distance.duration_minutes} мин."
-            )
-        except Exception as e:
-            await message.answer(f"Ошибка: {e}")
+    try:
+        await dependencies.start_expedition_use_case.execute(str(message.from_user.id), distance)
+    except Exception as e:
+        await message.answer(f"Ошибка: {e}")
 

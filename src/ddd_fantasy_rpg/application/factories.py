@@ -1,4 +1,6 @@
 from ddd_fantasy_rpg.domain.player.stats_calculation_service import StatsCalculationService
+from ddd_fantasy_rpg.domain.expedition.expedition_factory import ExpeditionFactory
+from ddd_fantasy_rpg.domain.expedition.expedition_event_generator import ExpeditionEventGenerator
 from ddd_fantasy_rpg.infrastructure.time import UtcTimeProvider
 from ddd_fantasy_rpg.infrastructure.random import SystemRandomProvider
 from ddd_fantasy_rpg.infrastructure.notifications import TelegramNotificationService
@@ -6,7 +8,7 @@ from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 from ddd_fantasy_rpg.application.events.dispatcher import EventDispatcher
 from ddd_fantasy_rpg.application.formatters.battle_formatter import BattleMessageFormatter
-from ddd_fantasy_rpg.application.events.handlers.telegram_notifier import PlayerCreatedTelegramHandler
+from ddd_fantasy_rpg.application.events.handlers.telegram_notifier import PlayerCreatedTelegramHandler, ExpeditionCreatedTelegramHandler
 from ddd_fantasy_rpg.application import (
     StartExpeditionUseCase,
     StartBattleUseCase,
@@ -43,17 +45,23 @@ class ApplicationFactory:
         self.dispatcher = EventDispatcher()
         
         self.stats_service = StatsCalculationService()
+        self.event_generator = ExpeditionEventGenerator(self.random_provider)
         
         # === Создаем Use Case ===
         # === Generate Event ===
         self.generate_event_uc = GenerateEventUseCase(self.random_provider)
+        self.expedition_factory = ExpeditionFactory(
+            self.event_generator,
+            self.time_provider,
+        )
 
         # === Battle ===
         self.start_battle_uc = StartBattleUseCase(self.notification_service)
         self.start_exp_uc = StartExpeditionUseCase(
-            self.generate_event_uc,
+            self.expedition_factory,
+            self.dispatcher,
             self.time_provider,
-            self.unit_of_work
+            self.unit_of_work,
         )
         self.complete_battle_uc = CompleteBattleUseCase()
         self.perform_battle_action_uc = PerformBattleActionUseCase(
@@ -124,3 +132,4 @@ class ApplicationFactory:
         """Регистрирует хендлеры для обработки событий"""
         
         self.dispatcher.register(PlayerCreatedTelegramHandler(self.notification_service, self.unit_of_work))
+        self.dispatcher.register(ExpeditionCreatedTelegramHandler(self.notification_service, self.unit_of_work))
