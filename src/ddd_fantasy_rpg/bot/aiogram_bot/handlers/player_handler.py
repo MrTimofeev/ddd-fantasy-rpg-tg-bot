@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
-from ddd_fantasy_rpg.domain.player import PlayerAlreadyExistingError
+from ddd_fantasy_rpg.domain.player.exceptions import PlayerAlreadyExistingError
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 
 router = Router()
@@ -16,15 +16,11 @@ async def cmd_create_player(
     user = message.from_user
 
     try:
-        async with dependencies.unit_of_work() as uow:
-            player = await dependencies.create_player_use_case.execute(
-                player_id=str(user.id),
-                telegram_id=user.id,
-                name=user.first_name or f"User{user.id}",
-                uow=uow
-            )
-
-            await message.answer(f"Создан персонаж: {player.name} ({player.profession.value})")
+        await dependencies.create_player_use_case.execute(
+            player_id=str(user.id),
+            telegram_id=user.id,
+            name=user.first_name or f"User{user.id}",
+        )
 
     except PlayerAlreadyExistingError:
         await message.answer("Ты уже в игре!")
