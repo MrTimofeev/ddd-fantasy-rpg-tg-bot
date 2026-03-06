@@ -6,5 +6,3 @@ class TimeProvider(ABC):
     @abstractmethod
     def now(self) -> datetime:
         raise NotImplementedError
-    
-
