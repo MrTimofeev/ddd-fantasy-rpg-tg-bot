@@ -1,10 +1,12 @@
+from ddd_fantasy_rpg.domain.player.stats_calculation_service import StatsCalculationService
 from ddd_fantasy_rpg.infrastructure.time import UtcTimeProvider
 from ddd_fantasy_rpg.infrastructure.random import SystemRandomProvider
 from ddd_fantasy_rpg.infrastructure.notifications import TelegramNotificationService
 from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
+from ddd_fantasy_rpg.application.events.dispatcher import EventDispatcher
 from ddd_fantasy_rpg.application.formatters.battle_formatter import BattleMessageFormatter
-from ddd_fantasy_rpg.domain.battle.battle_mechanics_service import BattleMechanicsService
+from ddd_fantasy_rpg.application.events.handlers.telegram_notifier import PlayerCreatedTelegramHandler
 from ddd_fantasy_rpg.application import (
     StartExpeditionUseCase,
     StartBattleUseCase,
@@ -37,9 +39,11 @@ class ApplicationFactory:
         self.message_formatter = BattleMessageFormatter()
         self.notification_service = TelegramNotificationService(
             bot, self.message_formatter)
-
-        self.battle_mechanics = BattleMechanicsService(self.random_provider)
-
+        self.unit_of_work = SqlAlchemyUnitOfWork(self.session_maker)
+        self.dispatcher = EventDispatcher()
+        
+        self.stats_service = StatsCalculationService()
+        
         # === Создаем Use Case ===
         # === Generate Event ===
         self.generate_event_uc = GenerateEventUseCase(self.random_provider)
@@ -47,10 +51,12 @@ class ApplicationFactory:
         # === Battle ===
         self.start_battle_uc = StartBattleUseCase(self.notification_service)
         self.start_exp_uc = StartExpeditionUseCase(
-            self.generate_event_uc, self.time_provider)
+            self.generate_event_uc,
+            self.time_provider,
+            self.unit_of_work
+        )
         self.complete_battle_uc = CompleteBattleUseCase()
         self.perform_battle_action_uc = PerformBattleActionUseCase(
-            self.battle_mechanics,
             self.complete_battle_uc)
         self.match_pvp_uc = MatchPvpExpeditionsUseCase()
 
@@ -63,10 +69,8 @@ class ApplicationFactory:
         self.get_active_exp_uc = GetActiveExpeditionUseCase()
 
         # === Player ===
-        self.create_player_uc = CreatePlayerUseCase()
+        self.create_player_uc = CreatePlayerUseCase(self.unit_of_work, self.dispatcher, self.stats_service)
 
-    def uow_factory(self):
-        return SqlAlchemyUnitOfWork(self.session_maker)
 
     def create_background_tasks(self):
         """Создает фоновые задачи"""
@@ -114,7 +118,9 @@ class ApplicationFactory:
             # Services
             notification_service=self.notification_service,
             message_formatter=self.message_formatter,
-
-            # Infrastructure
-            unit_of_work_factory=self.uow_factory
         )
+        
+    def create_event_dispatcher(self) -> None:
+        """Регистрирует хендлеры для обработки событий"""
+        
+        self.dispatcher.register(PlayerCreatedTelegramHandler(self.notification_service, self.unit_of_work))

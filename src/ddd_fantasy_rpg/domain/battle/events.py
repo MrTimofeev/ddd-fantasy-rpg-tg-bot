@@ -15,3 +15,5 @@ class BattleFinished(DomainEvent):
     result: BattleResult
     winner_id: str
     loser_id: str
+
+

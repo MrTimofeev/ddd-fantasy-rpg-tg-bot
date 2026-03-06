@@ -55,6 +55,9 @@ async def main():
     asyncio.create_task(background_tasks["start_event_for_complete_expeditions"].run())
     asyncio.create_task(background_tasks["pvp_matching"].run())
 
+    # Регистрируем все обработчики событий
+    app_factory.create_event_dispatcher()
+    
     register_all_handlers(dp, dependencies)
     await dp.start_polling(bot)
 
