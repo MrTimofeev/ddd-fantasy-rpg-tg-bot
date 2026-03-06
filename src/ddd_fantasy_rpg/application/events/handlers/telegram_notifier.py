@@ -1,9 +1,8 @@
-from typing import Type
-
 from ddd_fantasy_rpg.application.events.dispatcher import EventHandler
 from ddd_fantasy_rpg.domain.common.domain_event import DomainEvent
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.domain.player.events import PlayerDied, PlayerCreated
+from ddd_fantasy_rpg.domain.expedition.events import ExpeditionStarted
 
 from ddd_fantasy_rpg.domain.common.notifications import NotificationService
 
@@ -45,4 +44,21 @@ class PlayerDeathTelegramHandler(EventHandler):
         
         
 
+class ExpeditionCreatedTelegramHandler(EventHandler):
+    def __init__(self, notification_service: NotificationService, uow: UnitOfWork):
+        self._uow = uow
+        self._notification_service = notification_service 
+    
+    @property
+    def subscribed_to(self) -> type[DomainEvent]:
+        return ExpeditionStarted
+
+    async def handle(self, event: ExpeditionStarted) -> None:
+        expedition = await self._uow.expeditions.get_by_player_id(event.player_id)
+        if not expedition:
+            raise ValueError(f"Экспедиция {event.expedition_id} игрока {event.player_id} не была найдена")
         
+        await self._notification_service.notify_create_expedition(expedition)
+        
+    
+ 
