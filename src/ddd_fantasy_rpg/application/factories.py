@@ -1,3 +1,5 @@
+from typing import Callable, Awaitable
+
 from ddd_fantasy_rpg.domain.player.stats_calculation_service import StatsCalculationService
 from ddd_fantasy_rpg.domain.expedition.expedition_factory import ExpeditionFactory
 from ddd_fantasy_rpg.domain.expedition.expedition_event_generator import ExpeditionEventGenerator
@@ -8,7 +10,7 @@ from ddd_fantasy_rpg.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 from ddd_fantasy_rpg.bot.aiogram_bot.dependency_context import DependencyContext
 from ddd_fantasy_rpg.application.events.dispatcher import EventDispatcher
 from ddd_fantasy_rpg.application.formatters.battle_formatter import BattleMessageFormatter
-from ddd_fantasy_rpg.application.events.handlers.telegram_notifier import PlayerCreatedTelegramHandler, ExpeditionCreatedTelegramHandler
+from ddd_fantasy_rpg.application.events.handlers.telegram_notifier import PlayerCreatedTelegramHandler, ExpeditionCreatedTelegramHandler, ExpeditionCompletedTelegramHandler
 from ddd_fantasy_rpg.application import (
     StartExpeditionUseCase,
     StartBattleUseCase,
@@ -17,7 +19,6 @@ from ddd_fantasy_rpg.application import (
     MatchPvpExpeditionsUseCase,
     PerformBattleActionUseCase,
     CreatePlayerUseCase,
-    GenerateEventUseCase,
     CompleteExpeditionByTimeUseCase,
     ProcessCompletedExpeditionUseCase,
     GetCompletedExpeditionUseCase,
@@ -41,7 +42,6 @@ class ApplicationFactory:
         self.message_formatter = BattleMessageFormatter()
         self.notification_service = TelegramNotificationService(
             bot, self.message_formatter)
-        self.unit_of_work = SqlAlchemyUnitOfWork(self.session_maker)
         self.dispatcher = EventDispatcher()
         
         self.stats_service = StatsCalculationService()
@@ -49,7 +49,6 @@ class ApplicationFactory:
         
         # === Создаем Use Case ===
         # === Generate Event ===
-        self.generate_event_uc = GenerateEventUseCase(self.random_provider)
         self.expedition_factory = ExpeditionFactory(
             self.event_generator,
             self.time_provider,
@@ -61,7 +60,7 @@ class ApplicationFactory:
             self.expedition_factory,
             self.dispatcher,
             self.time_provider,
-            self.unit_of_work,
+            self.uow_factory,
         )
         self.complete_battle_uc = CompleteBattleUseCase()
         self.perform_battle_action_uc = PerformBattleActionUseCase(
@@ -70,14 +69,21 @@ class ApplicationFactory:
 
         # === Expedition ===
         self.complete_exp_by_time_uc = CompleteExpeditionByTimeUseCase(
-            self.time_provider)
+            self.time_provider,
+            self.uow_factory,
+            self.dispatcher
+        )
         self.process_comppleted_exp_uc = ProcessCompletedExpeditionUseCase(
-            self.start_battle_uc, self.time_provider, self.random_provider)
-        self.get_completed_exp_uc = GetCompletedExpeditionUseCase()
-        self.get_active_exp_uc = GetActiveExpeditionUseCase()
+            self.start_battle_uc,
+            self.time_provider,
+            self.random_provider,
+            self.uow_factory
+        )
+        self.get_completed_exp_uc = GetCompletedExpeditionUseCase(self.uow_factory)
+        self.get_active_exp_uc = GetActiveExpeditionUseCase(self.uow_factory)
 
         # === Player ===
-        self.create_player_uc = CreatePlayerUseCase(self.unit_of_work, self.dispatcher, self.stats_service)
+        self.create_player_uc = CreatePlayerUseCase(self.uow_factory, self.dispatcher, self.stats_service)
 
 
     def create_background_tasks(self):
@@ -91,15 +97,11 @@ class ApplicationFactory:
         expedition_complete_task = ExpeditionCompletionBackgroundTask(
             complete_expetidion_by_time_use_case=self.complete_exp_by_time_uc,
             get_active_expedition_use_case=self.get_active_exp_uc,
-            notification_service=self.notification_service,
-            async_session_maker=self.session_maker
         )
 
         process_completed_expeditoin = ExpeditoinEventProcessingBackgroundTask(
             self.process_comppleted_exp_uc,
             self.get_completed_exp_uc,
-            self.notification_service,
-            self.session_maker,
         )
 
         pvp_task = PvpMatchingBackgroundTask(
@@ -131,5 +133,9 @@ class ApplicationFactory:
     def create_event_dispatcher(self) -> None:
         """Регистрирует хендлеры для обработки событий"""
         
-        self.dispatcher.register(PlayerCreatedTelegramHandler(self.notification_service, self.unit_of_work))
-        self.dispatcher.register(ExpeditionCreatedTelegramHandler(self.notification_service, self.unit_of_work))
+        self.dispatcher.register(PlayerCreatedTelegramHandler(self.notification_service, self.uow_factory))
+        self.dispatcher.register(ExpeditionCreatedTelegramHandler(self.notification_service, self.uow_factory))
+        self.dispatcher.register(ExpeditionCompletedTelegramHandler(self.notification_service, self.uow_factory))
+
+    def uow_factory(self):
+        return SqlAlchemyUnitOfWork(self.session_maker)
