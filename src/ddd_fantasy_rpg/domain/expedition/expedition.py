@@ -1,9 +1,9 @@
 from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
-from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter, MonsterEncounter, TraderEncounter, ResourceGathering
+from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter
 from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
 from ddd_fantasy_rpg.domain.expedition.expedition_status import ExpeditionStatus
 from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
@@ -58,23 +58,27 @@ class Expedition:
 
         return False
 
-    def complete_travel(self, outcome: ExpeditionEvent) -> None:
+    def complete_travel(self) -> None:
         if self.status != ExpeditionStatus.ACTIVE:
             raise DomainError(
                 f"Невозможно завершить путешествие для экспедиции {self.id}. Она неактивна (статус: {self.status.value}).")
         if self._travel_completed_at is None:
             raise DomainError(
                 f"Согласно `is_finished`, поездка для экспедиции {self.id} еще не завершена.")
-        pass
+            
+        if not self.outcome:
+            raise DomainError(f"Для завершения у экспедиции должна быть сгенерировано событие")
+        
+        self.status = ExpeditionStatus.COMPLETED
+        
+        self._pending_events.append(ExpeditionCompleted(expedition_id=self.id, player_id=self.player_id, outcome=self.outcome))
+
 
     def confirm_event_processed(self) -> None:
         if not self.is_travel_completed:
             raise DomainError(
                 f"Невозможно подтвердить обработку события для экспедиции {self.id}. Путешествие еще не завершено.")
 
-        self.status = ExpeditionStatus.COMPLETED
-        
-        completion_event = ExpeditionCompleted(expedition_id=self.id, player_id=self.player_id, outcome=self.outcome)
         
     def pop_pending_events(self) -> list[DomainEvent]:
         events = list(self._pending_events)
