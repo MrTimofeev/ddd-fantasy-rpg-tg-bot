@@ -1,5 +1,4 @@
-import uuid
-from datetime import timedelta
+from typing import Callable
 
 from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
@@ -20,15 +19,16 @@ class StartExpeditionUseCase:
         expedition_factory: ExpeditionFactory,
         dispatcher: EventDispatcher,
         time_provider: TimeProvider,
-        uow: UnitOfWork,
+        uow_factory: Callable[[], UnitOfWork],
+
     ):
         self._expedition_factory = expedition_factory
         self._dispatcher = dispatcher
         self._time_provider = time_provider
-        self._uow = uow
+        self._uow_factory = uow_factory
 
     async def execute(self, player_id: str, distance: ExpeditionDistance):
-        async with self._uow as uow:
+        async with self._uow_factory() as uow:
             player = await uow.players.get_by_id(player_id)
             if player is None:
                 raise PlayerNotFoundError(player_id)

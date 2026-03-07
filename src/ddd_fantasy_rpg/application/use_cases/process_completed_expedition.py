@@ -1,3 +1,5 @@
+from typing import Callable
+
 from ddd_fantasy_rpg.domain.expedition.expedition_event import MonsterEncounter, PlayerDuelEncounter
 from ddd_fantasy_rpg.domain.expedition.expedition import Expedition
 from ddd_fantasy_rpg.domain.common.time_provider import TimeProvider
@@ -16,33 +18,35 @@ class ProcessCompletedExpeditionUseCase:
         start_battle_use_case: StartBattleUseCase,
         time_provider: TimeProvider,
         random_provider: RandomProvider,
+        uow_factory: Callable[[], UnitOfWork],
     ):
         self._start_battle_uc = start_battle_use_case
         self._time_provider = time_provider
         self._random_provider = random_provider
+        self._uow_factory = uow_factory
 
 
-    async def execute(self, expedition: Expedition, uow: UnitOfWork):
+    async def execute(self, expedition: Expedition):
         # TODO: здесь будет либо монстр либо торговец либо ресы добывать
-        
-        # 1. Получаем игрока из текущей экспедиции
-        player = await uow.players.get_by_id(expedition.player_id)
-        if not player:
-            raise PlayerNotFoundError(expedition.player_id)
-        
-        # 3. Если монстр - запускаем бой
-        if isinstance(expedition.outcome, MonsterEncounter):
-            await self._start_battle_uc.start_pve_battle(player, expedition.outcome.monster, uow)
-        # 3. Если pvp и нашелся противник - запускаем бой
-        elif isinstance(expedition.outcome, PlayerDuelEncounter):
-            if not expedition.outcome.opponent_player_id:
-                # пока выбрасываем исключение но позже генерируем другое событие
-                raise ValueError(
-                    "Игроку не нашло пару сделай генерацию другого события")
-            await self._start_battle_uc.start_pvp_battle(expedition.player_id, expedition.outcome.opponent_player_id, uow)
+        async with self._uow_factory() as uow:
+            # 1. Получаем игрока из текущей экспедиции
+            player = await uow.players.get_by_id(expedition.player_id)
+            if not player:
+                raise PlayerNotFoundError(expedition.player_id)
+            
+            # 3. Если монстр - запускаем бой
+            if isinstance(expedition.outcome, MonsterEncounter):
+                await self._start_battle_uc.start_pve_battle(player, expedition.outcome.monster, uow)
+            # 3. Если pvp и нашелся противник - запускаем бой
+            elif isinstance(expedition.outcome, PlayerDuelEncounter):
+                if not expedition.outcome.opponent_player_id:
+                    # пока выбрасываем исключение но позже генерируем другое событие
+                    raise ValueError(
+                        "Игроку не нашло пару сделай генерацию другого события")
+                await self._start_battle_uc.start_pvp_battle(expedition.player_id, expedition.outcome.opponent_player_id, uow)
 
-        # 4 обновляем статус экспедиции
-        expedition.start_event(expedition.outcome)
-        
-        # 5. сохраняем статус экспедиции
-        await uow.expeditions.save(expedition)
+            # 4 обновляем статус экспедиции
+            expedition.start_event(expedition.outcome)
+            
+            # 5. сохраняем статус экспедиции
+            await uow.expeditions.save(expedition)
