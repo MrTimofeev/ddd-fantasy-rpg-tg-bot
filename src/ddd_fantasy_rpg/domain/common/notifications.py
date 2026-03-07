@@ -72,3 +72,11 @@ class NotificationService(ABC):
     ) -> None:
         """Уведомляет игрока о старте экспедиции"""
         raise NotImplementedError
+    
+    @abstractmethod
+    async def notify_completed_expedition(
+        self,
+        expedition: Expedition,
+    ) -> None:
+        """Уведомляет игрока о завершении экспедиции"""
+        raise NotImplementedError

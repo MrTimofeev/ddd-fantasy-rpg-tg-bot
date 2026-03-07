@@ -27,7 +27,6 @@ class TelegramNotificationService(NotificationService):
         monster_hp: int
     ) -> None:
         msg = (
-            f"🗺️ Твоя вылазка завершена!\n"
             f"👹 Ты встретил {monster_name} (ур. {monster_level})!\n"
             f"❤️ Твоё HP {player_hp} 👹 HP {monster_hp}\n"
             f"⚔️ Бой начинается!"
@@ -171,6 +170,12 @@ class TelegramNotificationService(NotificationService):
             expedition.player_id,
              (f"Отправился в {expedition.distance.key} вылазку!\n"
             f"Вернёшься через {expedition.distance.duration_minutes} мин.")
+        )
+    
+    async def notify_completed_expedition(self, expedition: Expedition) -> None:
+        await self._bot.send_message(
+            expedition.player_id,
+            (f"🗺️ Твоя вылазка завершена!\n")
         )
 
         
