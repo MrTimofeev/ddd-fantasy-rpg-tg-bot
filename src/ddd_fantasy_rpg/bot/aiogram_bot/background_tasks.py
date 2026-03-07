@@ -19,27 +19,19 @@ class ExpeditionCompletionBackgroundTask:
         self,
         complete_expetidion_by_time_use_case: CompleteExpeditionByTimeUseCase,
         get_active_expedition_use_case: GetActiveExpeditionUseCase,
-        notification_service: NotificationService,
-        async_session_maker: callable
     ):
         self._complete_expedition_by_time_uc = complete_expetidion_by_time_use_case
         self._get_acive_expedition_uc = get_active_expedition_use_case
-        self._notification_service = notification_service
-        self._session_maker = async_session_maker
 
     async def run(self):
         while True:
             try:
-                async with SqlAlchemyUnitOfWork(self._session_maker) as uow:
-                    expeditions = await self._get_acive_expedition_uc.execute(uow)
-
-                    for exp in expeditions:
-                        try:
-                            # Завершаем вылазку
-                            await self._complete_expedition_by_time_uc.execute(exp.player_id, uow)
-                        except Exception as e:
-                            print(
-                                f"Ошибка при обработке вылазки {exp.player_id}: {e}")
+                expeditions = await self._get_acive_expedition_uc.execute()
+                for exp in expeditions:
+                    try:
+                        await self._complete_expedition_by_time_uc.execute(exp.player_id)
+                    except Exception as e:
+                        print(f"Ошибка при обработке вылазки {exp.player_id}: {e}")
             except Exception as e:
                 print(f'Ошибка в фоновой задаче: {e}')
 
@@ -55,27 +47,22 @@ class ExpeditoinEventProcessingBackgroundTask:
         self,
         start_evetnt_for_complete_expedition: ProcessCompletedExpeditionUseCase,
         get_complete_expedition_use_case: GetCompletedExpeditionUseCase,
-        notification_service: NotificationService,
-        async_session_maker: callable,
     ):
         self._start_evet_for_complete_expedition = start_evetnt_for_complete_expedition
         self._get_complete_expedition_uc = get_complete_expedition_use_case
-        self._notification_service = notification_service
-        self._session_maker = async_session_maker
 
     async def run(self):
         while True:
             try:
-                async with SqlAlchemyUnitOfWork(self._session_maker) as uow:
-                    expeditions = await self._get_complete_expedition_uc.execute(uow)
+                expeditions = await self._get_complete_expedition_uc.execute()
 
-                    for exp in expeditions:
-                        try:
-                            # запускаем событие
-                            await self._start_evet_for_complete_expedition.execute(exp, uow)
-                        except Exception as e:
-                            print(
-                                f"Ошибка при обработке вылазки {exp.player_id}: {e}")
+                for exp in expeditions:
+                    try:
+                        # запускаем событие
+                        await self._start_evet_for_complete_expedition.execute(exp)
+                    except Exception as e:
+                        print(
+                            f"Ошибка при обработке вылазки {exp.player_id}: {e}")
             except Exception as e:
                 print(f'Ошибка в фоновой задаче: {e}')
 
