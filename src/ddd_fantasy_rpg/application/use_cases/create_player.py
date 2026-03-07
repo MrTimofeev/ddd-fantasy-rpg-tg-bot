@@ -1,3 +1,5 @@
+from typing import Callable
+
 from ddd_fantasy_rpg.domain.player.player import Player
 from ddd_fantasy_rpg.domain.player.race import Race
 from ddd_fantasy_rpg.domain.player.player_profession import PlayerClass
@@ -14,11 +16,11 @@ class CreatePlayerUseCase:
 
     def __init__(
         self,
-        uow: UnitOfWork,
+        uow_factory: Callable[[], UnitOfWork],
         dispatcher: EventDispatcher,
         stats_service: StatsCalculationService,
     ) -> None:
-        self._uow = uow
+        self._uow_factory = uow_factory
         self._dispatcher = dispatcher
         self._stats_service = stats_service
 
@@ -33,7 +35,7 @@ class CreatePlayerUseCase:
         """
         Создает нового игрока с заданными параметрами.
         """
-        async with self._uow as uow:
+        async with self._uow_factory() as uow:
             existing = await uow.players.get_by_id(player_id)
             if existing:
                 raise PlayerAlreadyExistingError(player_id)
