@@ -20,6 +20,8 @@ from ddd_fantasy_rpg.domain.monster.monster import Monster
 from ddd_fantasy_rpg.infrastructure.database.models import PlayerORM, ExpeditionORM, BattleORM, PlayerItemORM, PlayerStatsORM
 
 # === Вспомогательные функции для Item ===
+
+
 def _item_to_dict(item: ItemInstance) -> Dict[str, Any]:
     return {
         "name": item.name,
@@ -58,13 +60,12 @@ def player_to_orm(player: Player) -> PlayerORM:
         id=player.id,
         telegram_id=player.telegram_id,
         name=player.name,
-        race=player.race.value, # Сохраняем значение enum
+        race=player.race.value,  # Сохраняем значение enum
         player_profession=player.profession.value,
         level=player.level,
         exp=player.exp
     )
 
-    
     stats = player.get_base_stats()
     orm_stats = PlayerStatsORM(
         player_id=player.id,
@@ -76,7 +77,7 @@ def player_to_orm(player: Player) -> PlayerORM:
         armor=stats.armor
     )
     orm_player.stats = orm_stats
-    
+
     for item in player.get_inventory_items():
         orm_item = PlayerItemORM(
             id=item.id,
@@ -90,13 +91,13 @@ def player_to_orm(player: Player) -> PlayerORM:
                 "intelligence": item.stats.intelligence,
                 "max_hp": item.stats.max_hp,
                 "damage": item.stats.damage,
-            }, 
+            },
             is_equipped=item.is_equipped,
             slot_name=item.slot,
             modifiers_json=item.modifiers
         )
         orm_player.items.append(orm_item)
-    
+
     return orm_player
 
 
@@ -110,8 +111,7 @@ def player_from_orm(orm: PlayerORM) -> Player:
         damage=orm.stats.damage,
         armor=orm.stats.armor
     )
-    
-    
+
     player = Player.__new__(Player)
     player.id = orm.id
     player.telegram_id = orm.telegram_id
@@ -121,30 +121,29 @@ def player_from_orm(orm: PlayerORM) -> Player:
     player.level = orm.level
     player.exp = orm.exp
     player.base_stats = base_stats
-    
+
     player._current_hp = base_stats.max_hp
-    
+
     player._inventory = Inventory()
     player._equipment = Equipment()
     player._is_dead = False
     player._death_timestamp = None
     player._pending_events = []
-    
+
     for orm_item in orm.items:
         item_stats = CharacterStats(**orm_item.stats_json)
-        
+
         item = ItemInstance(
             id=orm_item.id,
             name=orm_item.name,
             template_id=orm_item.template_id,
-            level_required=0, # Нужно сохранить в БД если важно
+            level_required=0,  # Нужно сохранить в БД если важно
             item_type=ItemType(orm_item.item_type),
             stats=item_stats,
             owner_id=orm.id,
             modifiers=orm_item.modifiers_json or {}
         )
-    
-    
+
         if orm_item.is_equipped and orm_item.slot_name:
             # Восстанавливаем внутреннее состояние предмета
             item._is_equipped = True
@@ -153,7 +152,7 @@ def player_from_orm(orm: PlayerORM) -> Player:
             setattr(player._equipment, orm_item.slot_name, item)
         else:
             player._inventory.add_item(item)
-            
+
     return player
 
 
@@ -244,7 +243,7 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
     if orm.outcome_type == "monster" and orm.outcome_data:
         mob_data = orm.outcome_data["monster"]
         drop_items = [_item_from_dict(item) for item in mob_data["drop_items"]]
-        monster = Monster(  
+        monster = Monster(
             name=mob_data["name"],
             level=mob_data["level"],
             base_damage=mob_data["base_damage"],
@@ -258,18 +257,23 @@ def expedition_from_orm(orm: ExpeditionORM) -> Optional[Expedition]:
             opponent_player_id=orm.outcome_data["opponent_player_id"]
         )
 
-    return Expedition(
-        id=orm.id,
-        player_id=orm.player_id,
-        distance=distance,
-        start_time=start_time,
-        planned_end_time=end_time,
-        outcome=outcome,
-        status=ExpeditionStatus(orm.status), 
-    )
+    expedition = Expedition.__new__(Expedition)
+    expedition.id = orm.id
+    expedition.player_id = orm.player_id
+    expedition.distance = distance
+    expedition.start_time = start_time
+    expedition.planned_end_time = end_time
+    expedition.outcome = outcome
+    expedition.status = ExpeditionStatus(orm.status)
 
+    expedition._travel_completed_at = None
+    expedition._pending_events = []
+
+    return expedition
 
 # === Battle Mapper ===
+
+
 def battle_to_orm(battle: Battle) -> BattleORM:
     battle_id = f"{battle._attacker.id}_vs_{battle._defender.id}"
     return BattleORM(
@@ -301,5 +305,6 @@ def battle_from_orm(orm: BattleORM) -> Optional[Battle]:
     battle._current_turn_owner_id = orm.current_turn_owner_id
     battle._is_finished = orm.is_finished
     battle._winner = winner
-    battle._flee_attempts = {attacker.id: 0, defender.id: 0}  # TODO: сохранять/загружать flee_attempts сейчас костыль, а еще лучше сделать фиксированные шанс, которые зависит от твоей ловкости и ловкости врага
+    # TODO: сохранять/загружать flee_attempts сейчас костыль, а еще лучше сделать фиксированные шанс, которые зависит от твоей ловкости и ловкости врага
+    battle._flee_attempts = {attacker.id: 0, defender.id: 0}
     return battle
