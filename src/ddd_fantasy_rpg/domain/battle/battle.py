@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional
-from collections import deque
+from typing import Dict, Optional, List
 
 from ddd_fantasy_rpg.domain.common.domain_event import DomainEvent
 
@@ -12,6 +11,7 @@ from ddd_fantasy_rpg.domain.battle.combatant import Combatant
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, BattleParticipant, PvpVictory, PlayerVictory, MonsterVictory
 from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
 from ddd_fantasy_rpg.domain.battle.battle_action_result import BattleActionResult, AttackResult, FleeResult, ItemUseResult, SkillUseResult
+from ddd_fantasy_rpg.domain.battle.events import BattleStarted
 
 from ddd_fantasy_rpg.domain.common.random_provider import RandomProvider
 from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
@@ -38,12 +38,15 @@ class Battle:
 
     _flee_attempts: Dict[str, int] = field(default_factory=dict)
     _is_finished: bool = False
+    
+    _pending_events: List[DomainEvent] = field(
+        default_factory=list, repr=False)
+
 
     def __post_init__(self):
         self._flee_attempts[self.attacker.id] = 0
         self._flee_attempts[self.attacker.id] = 0
 
-        self._pending_events: deque[DomainEvent] = deque()
         start_event = BattleStarted(
             battle_id=self.battle_id, attacker_id=self.attacker.id,
             defender_id=self.defender.id
@@ -306,6 +309,15 @@ class Battle:
 
     @classmethod
     def start(cls, battle_id: str, attacker: Combatant, defender: Combatant, random_provider: RandomProvider) -> "Battle":
+        
+        start_battle = BattleStarted(
+            battle_id=battle_id,
+            attacker_id=attacker.id,
+            defender_id=defender.id
+        )  
+       
+        cls._pending_events.append(start_battle)
+        
         return cls(
             battle_id=battle_id,
             attacker=attacker,

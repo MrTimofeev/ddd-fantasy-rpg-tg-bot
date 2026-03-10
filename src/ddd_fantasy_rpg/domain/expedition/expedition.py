@@ -1,7 +1,6 @@
-from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter
 from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
@@ -22,15 +21,17 @@ class Expedition:
     outcome: Optional[ExpeditionEvent] = None
     _travel_completed_at: Optional[datetime] = None
 
+    _pending_events: List[DomainEvent] = field(
+        default_factory=list, repr=False)
+
     def __post_init__(self):
         if self.status == ExpeditionStatus.ACTIVE and self.outcome is None:
             raise DomainError(
                 f"Активная экспедиция {self.id} должна иметь запланированный результат.")
-            
-        self._pending_events: deque[DomainEvent] = deque()
-        start_events = ExpeditionStarted(expedition_id=self.id, player_id=self.player_id)
+
+        start_events = ExpeditionStarted(
+            expedition_id=self.id, player_id=self.player_id)
         self._pending_events.append(start_events)
-        
 
     @property
     def is_active(self) -> bool:
@@ -65,21 +66,21 @@ class Expedition:
         if self._travel_completed_at is None:
             raise DomainError(
                 f"Согласно `is_finished`, поездка для экспедиции {self.id} еще не завершена.")
-            
-        if not self.outcome:
-            raise DomainError(f"Для завершения у экспедиции должна быть сгенерировано событие")
-        
-        self.status = ExpeditionStatus.COMPLETED
-        
-        self._pending_events.append(ExpeditionCompleted(expedition_id=self.id, player_id=self.player_id, outcome=self.outcome))
 
+        if not self.outcome:
+            raise DomainError(
+                f"Для завершения у экспедиции должна быть сгенерировано событие")
+
+        self.status = ExpeditionStatus.COMPLETED
+
+        self._pending_events.append(ExpeditionCompleted(
+            expedition_id=self.id, player_id=self.player_id, outcome=self.outcome))
 
     def confirm_event_processed(self) -> None:
         if not self.is_travel_completed:
             raise DomainError(
                 f"Невозможно подтвердить обработку события для экспедиции {self.id}. Путешествие еще не завершено.")
 
-        
     def pop_pending_events(self) -> list[DomainEvent]:
         events = list(self._pending_events)
         self._pending_events.clear()

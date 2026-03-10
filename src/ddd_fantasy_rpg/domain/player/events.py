@@ -87,3 +87,5 @@ class GuildStorageUpgraded(DomainEvent):
     player_id: str
     new_capacity: int
     cost_paid: int
+    
+    
