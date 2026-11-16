@@ -6,7 +6,7 @@ from ddd_fantasy_rpg.domain.common.domain_event import DomainEvent
 
 from ddd_fantasy_rpg.domain.battle.events import BattleStarted, BattleFinished
 
-from ddd_fantasy_rpg.domain.battle.combatant import Combatant
+from ddd_fantasy_rpg.domain.battle.combatant import Combatant, CombatantType
 
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, BattleParticipant, PvpVictory, PlayerVictory, MonsterVictory
 from ddd_fantasy_rpg.domain.battle.battle_action import BattleAction, BattleActionType
@@ -64,6 +64,14 @@ class Battle:
     @property
     def winner(self) -> Optional[Combatant]:
         return self._winner
+    
+    @property
+    def is_pvp(self) -> bool:
+        """Проверяет, является ли бой PVP"""
+        return (
+            self.attacker.combatant_type == CombatantType.PLAYER and
+            self.defender.combatant_type == CombatantType.PLAYER
+        )
 
     def get_opponent(self, combatant_id: str) -> Combatant:
         if combatant_id == self.attacker.id:
@@ -300,6 +308,7 @@ class Battle:
                 winner=winner_participant,
                 loser=loser_participant,
                 loot=loot, # TODO: сделать передачу предметов проигравшего победителю
+                experience_gained=exp_gained
             )
 
         else:

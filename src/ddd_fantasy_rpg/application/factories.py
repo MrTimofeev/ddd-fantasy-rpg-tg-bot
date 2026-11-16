@@ -1,5 +1,3 @@
-from typing import Callable, Awaitable
-
 from ddd_fantasy_rpg.domain.player.stats_calculation_service import StatsCalculationService
 from ddd_fantasy_rpg.domain.expedition.expedition_factory import ExpeditionFactory
 from ddd_fantasy_rpg.domain.expedition.expedition_event_generator import ExpeditionEventGenerator
@@ -55,7 +53,12 @@ class ApplicationFactory:
         )
 
         # === Battle ===
-        self.start_battle_uc = StartBattleUseCase(self.notification_service)
+        self.start_battle_uc = StartBattleUseCase(
+            self.random_provider,
+            self.dispatcher,
+            self.notification_service, 
+            self.uow_factory
+        )
         self.start_exp_uc = StartExpeditionUseCase(
             self.expedition_factory,
             self.dispatcher,
@@ -64,8 +67,10 @@ class ApplicationFactory:
         )
         self.complete_battle_uc = CompleteBattleUseCase()
         self.perform_battle_action_uc = PerformBattleActionUseCase(
-            self.complete_battle_uc)
-        self.match_pvp_uc = MatchPvpExpeditionsUseCase()
+            self.uow_factory,
+            self.complete_battle_uc, 
+        )
+        self.match_pvp_uc = MatchPvpExpeditionsUseCase(self.uow_factory)
 
         # === Expedition ===
         self.complete_exp_by_time_uc = CompleteExpeditionByTimeUseCase(

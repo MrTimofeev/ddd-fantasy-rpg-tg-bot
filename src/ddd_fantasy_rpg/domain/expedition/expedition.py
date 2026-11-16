@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, List
 
-from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter
+from ddd_fantasy_rpg.domain.expedition.expedition_event import ExpeditionEvent, PlayerDuelEncounter, MonsterEncounter, TraderEncounter, ResourceGathering
 from ddd_fantasy_rpg.domain.expedition.expedition_distance import ExpeditionDistance
 from ddd_fantasy_rpg.domain.expedition.expedition_status import ExpeditionStatus
 from ddd_fantasy_rpg.domain.common.base_exceptions import DomainError
@@ -76,11 +76,24 @@ class Expedition:
         self._pending_events.append(ExpeditionCompleted(
             expedition_id=self.id, player_id=self.player_id, outcome=self.outcome))
 
-    def confirm_event_processed(self) -> None:
+    def set_start_event_status(self, outcome: ExpeditionEvent) -> None:
         if not self.is_travel_completed:
-            raise DomainError(
-                f"Невозможно подтвердить обработку события для экспедиции {self.id}. Путешествие еще не завершено.")
-
+            raise DomainError(f"Невозможно установить статуст события экспедициии {self.id}. Путешествие еще не завершен.")
+        
+        if isinstance(outcome, MonsterEncounter):
+            self.status = ExpeditionStatus.PVE
+        elif isinstance(outcome, PlayerDuelEncounter):
+            self.status = ExpeditionStatus.PVP
+        elif isinstance(outcome, ResourceGathering):
+            self.status = ExpeditionStatus.RESOURCE
+        elif isinstance(outcome, TraderEncounter):
+            self.status = ExpeditionStatus.TRADER
+        else:
+            raise DomainError("неизвестное событие невозможно установить статутс экспедиции")
+    
+    def set_complete_event_status(self) -> None:
+        self.status = ExpeditionStatus.NO_ACTIVE
+    
     def pop_pending_events(self) -> list[DomainEvent]:
         events = list(self._pending_events)
         self._pending_events.clear()

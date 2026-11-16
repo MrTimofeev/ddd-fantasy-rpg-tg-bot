@@ -1,8 +1,12 @@
+from typing import Callable, Optional
+
 from ddd_fantasy_rpg.domain.common.unit_of_work import UnitOfWork
 from ddd_fantasy_rpg.domain.battle.battle import Battle
 from ddd_fantasy_rpg.domain.battle.battle_result import BattleResult, PlayerVictory, MonsterVictory, PvpVictory
-from ddd_fantasy_rpg.domain.battle.exceptions import BattleAlreadyFinishedError
-from ddd_fantasy_rpg.domain.player.exceptions import  PlayerNotFoundError
+from ddd_fantasy_rpg.domain.battle.exceptions import BattleAlreadyFinishedError, BattleNotFoundError
+from ddd_fantasy_rpg.domain.items.item_instance import ItemInstance
+from ddd_fantasy_rpg.domain.player.exceptions import PlayerNotFoundError
+from ddd_fantasy_rpg.application.events.dispatcher import EventDispatcher
 
 
 class CompleteBattleUseCase:
@@ -10,126 +14,132 @@ class CompleteBattleUseCase:
     Use Case для заверешния битвы. 
     """
 
-    
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        dispatcher: EventDispatcher,
+    ):
+        self._uow_factory = uow_factory
+        self._dispatcher = dispatcher
+
     async def complete_pve_battle(
         self,
-        battle: Battle,
-        uow: UnitOfWork,
+        battle_id: str,
+        monster_drop_loot: Optional[list[ItemInstance]] = None
     ) -> BattleResult:
         """Завершает PVE бой (игрок vs монстр)"""
+        async with self._uow_factory() as uow:
+            battle = await uow.battles.get_by_id(battle_id)
+            if not battle:
+                raise BattleAlreadyFinishedError()
 
-        if not battle.is_finished:
-            raise BattleAlreadyFinishedError()
+            result = battle.get_battle_result()
+            if not result:
+                raise ValueError("Результат у боя должен быть")
+            
+            outcome = result.outcome
+            player = None
 
-        result = battle.get_battle_result()
-        outcome = result.outcome
+            if isinstance(outcome, PlayerVictory):
+                player = await uow.players.get_by_id(outcome.winner.id)
+                if not player:
+                    raise PlayerNotFoundError(outcome.winner.id)
 
-        # только один игрок учасвствует в PVE
-        player_id = self._get_player_id_from_outcome(outcome)
-        player = await uow.players.get_by_id(player_id)
-        if not player:
-            raise PlayerNotFoundError(player_id)
+                # Начисление опыта и лута
+                player.add_exp(outcome.experience_gained)
+                
+                if monster_drop_loot:
+                    for item in monster_drop_loot:
+                        player.add_item_to_inventory(item)
 
-        if isinstance(outcome, PlayerVictory):
-            # Начисление опыта и лута
-            exp_gain = self._calculate_experience(
-                outcome.loser)  # TODO: реализовать
-            loot = self._generate_loot(outcome.loser)  # TODO: реализовать
+            elif isinstance(outcome, MonsterVictory):
+                player = await uow.players.get_by_id(outcome.loser.id)
+                if not player:
+                    raise PlayerNotFoundError(outcome.loser.id)
 
-            update_outcome = PlayerVictory(
-                winner=outcome.winner,
-                loser=outcome.loser,
-                loot=loot,
-                experience_gained=exp_gain
-            )
+                player.die(killer_id=None)
 
-            result = BattleResult(outcome=update_outcome, is_pvp=False)
-
-            # применяем изменени к игроку
-            # TODO: добавляем опыт (player.add_experience(exp_gain))
-            # TODO: добавляем лут (plaery.add_item(item))
-
+            else:
+                raise ValueError(f'неизвестный исход боя: {type(outcome)}')
+            
             await uow.players.save(player)
+            
+            # Обновляем экспедицию игрока
+            expedition = await uow.expeditions.get_by_player_id(player.id)
+            if expedition:
+                expedition.set_complete_event_status()
+                await uow.expeditions.save(expedition)
 
-        elif isinstance(outcome, MonsterVictory):
-            # Игрок погиб
-            player.die()
-            await uow.players.save(player)
-
-        # Обновляем экспедицию игрока
-        expedition = await uow.expeditions.get_by_player_id(player.id)
-        if expedition:
-            expedition.complete_event()
-            await uow.expeditions.save(expedition)
-
-        await uow.battles.save(battle)
+            await uow.battles.save(battle)
+            
+            # Сбор событий со всех агрегатов
+            events_to_publish = []
+            events_to_publish.extend(player.pop_pending_events())   
+            events_to_publish.extend(battle.pop_pending_events())
+        
+        if events_to_publish:
+            await self._dispatcher.publish(events_to_publish)
+            
         return result
 
     async def complete_pvp_battle(
         self,
-        battle: Battle,
-        uow: UnitOfWork
+        battle_id: str,
     ) -> BattleResult:
         """Завершаем PVP дуэаль (игрок vs игрок)."""
-        if not battle.is_finished:
-            raise BattleAlreadyFinishedError()
-
-        result = battle.get_battle_result()
-        outcome = result.outcome
-
-        if not isinstance(outcome, PvpVictory):
-            raise ValueError("Expected PvpVictory outcome")
-
-        winner = await uow.players.get_by_id(outcome.winner.id)
-        loser = await uow.players.get_by_id(outcome.loser.id)
-
-        if not winner:
-            raise PlayerNotFoundError(outcome.winner.id)
-        if not loser:
-            raise PlayerNotFoundError(outcome.loser.id)
-
-        # переносим инвентарь проигравшего
-        loot = list(loser.inventory)
-        for item in loot:
-            winner.add_item(item)
-
-        loser.die()
-
-        update_outcome = PvpVictory(
-            winner=outcome.winner,
-            loser=outcome.loser,
-            loot=loot
-        )
-
-        result = BattleResult(outcome=update_outcome, is_pvp=True)
-
-        await uow.players.save(winner)
-        await uow.players.save(loser)
-
-        # Обновляем экспедиции обоих игроков
-        for player in [winner, loser]:
-            expedition = await uow.expeditions.get_by_player_id(player.id)
-            if expedition:
-                expedition.complete_event()
-                await uow.expeditions.save(expedition)
-                
+        async with self._uow_factory() as uow:
+            battle = await uow.battles.get_by_id(battle_id)
             
-        await uow.battles.save(battle)
+            if not battle:
+                raise BattleNotFoundError(battle_id)
+            
+            if not battle.is_finished:
+                raise BattleAlreadyFinishedError()
+
+            result = battle.get_battle_result()
+            if not result:
+                raise ValueError("Результат у боя должен быть")
+            outcome = result.outcome
+
+            if not isinstance(outcome, PvpVictory):
+                raise ValueError("Expected PvpVictory outcome")
+
+            winner = await uow.players.get_by_id(outcome.winner.id)
+            loser = await uow.players.get_by_id(outcome.loser.id)
+
+            if not winner:
+                raise PlayerNotFoundError(outcome.winner.id)
+            if not loser:
+                raise PlayerNotFoundError(outcome.loser.id)
+
+            # переносим инвентарь проигравшего
+            dropped_items = loser.die(killer_id=winner.id)
+            
+            for item in dropped_items:
+                item.owner_id = winner.id
+                winner.add_item_to_inventory(item)
+
+            winner.add_exp(outcome.experience_gained)
+
+            await uow.players.save(winner)
+            await uow.players.save(loser)
+
+            # Обновляем экспедиции обоих игроков
+            for player in [winner, loser]:
+                expedition = await uow.expeditions.get_by_player_id(player.id)
+                if expedition:
+                    expedition.set_complete_event_status()
+                    await uow.expeditions.save(expedition)
+
+            await uow.battles.save(battle)
+            
+            # Сбор событий
+            event_to_publish = []
+            event_to_publish.extend(winner.pop_pending_events())
+            event_to_publish.extend(loser.pop_pending_events())
+            event_to_publish.extend(battle.pop_pending_events())
+
+        if event_to_publish:
+            await self._dispatcher.publish(event_to_publish)
+            
         return result
-
-    def _get_player_id_from_outcome(self, outcome) -> str:
-        """Возвращает ID игрока из ихода боя (для PVE)."""
-        if outcome.winner.is_player:
-            return outcome.winner.id
-        elif outcome.loser.is_player:
-            return outcome.loser.id
-        else:
-            raise ValueError("No player found is battle outcome")
-
-    def _calculate_experience(self, monster_participant) -> int:
-        # TODO: реализовать логику начисление опыта
-        return 0
-
-    def _generate_loot(self, monster_participant) -> list:
-        # TODO: реализовать генерацию лута
-        return []

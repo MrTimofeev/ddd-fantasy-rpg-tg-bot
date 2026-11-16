@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 from collections import defaultdict
 
 from ddd_fantasy_rpg.domain.expedition.expedition import Expedition
@@ -28,73 +28,78 @@ class MatchPvpExpeditionsUseCase:
     Use Case для матчинга PVP-дуэлей между игроками в активных экспедициях.
     """
 
-    async def execute(self, uow: UnitOfWork):
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+    ):
+        self._uow_factory = uow_factory
+
+    async def execute(self):
         """
         Выполняет матчинг PVP-дуэлей.
         """
-        # 1. Получаем все активные экспедиции
-        active_expeditions = await uow.expeditions.get_all_active_expeditions()
-        if len(active_expeditions) < 2:
-            return []
+        async with self._uow_factory() as uow:
+            # 1. Получаем все активные экспедиции
+            active_expeditions = await uow.expeditions.get_all_active_expeditions()
+            if len(active_expeditions) < 2:
+                return []
 
-        # 2. Загружаем игроков
-        player_ids = [exp.player_id for exp in active_expeditions]
-        players = await self._load_players(player_ids, uow)
+            # 2. Загружаем игроков
+            player_ids = [exp.player_id for exp in active_expeditions]
+            players = await self._load_players(player_ids, uow)
 
-        # 3. Фильтруем валидные пары (экспедиция + игрок)
-        valid_pairs: List[Tuple[Expedition, Player]] = []
-        for exp in active_expeditions:
-            if exp.player_id in players:
-                valid_pairs.append((exp, players[exp.player_id]))
+            # 3. Фильтруем валидные пары (экспедиция + игрок)
+            valid_pairs: List[Tuple[Expedition, Player]] = []
+            for exp in active_expeditions:
+                if exp.player_id in players:
+                    valid_pairs.append((exp, players[exp.player_id]))
 
-        if len(valid_pairs) < 2:
-            return []
+            if len(valid_pairs) < 2:
+                return []
 
-        # 4. Группируем по дистанции
-        by_distance = defaultdict(list)
-        for exp, player in valid_pairs:
-            by_distance[exp.distance].append((exp, player))
+            # 4. Группируем по дистанции
+            by_distance = defaultdict(list)
+            for exp, player in valid_pairs:
+                by_distance[exp.distance].append((exp, player))
 
-        # 5. Матчим пары
-        matched_player_ids = set()
+            # 5. Матчим пары
+            matched_player_ids = set()
 
-        for distance, pairs in by_distance.items():
-            # Сортируем по уровню
+            for distance, pairs in by_distance.items():
+                # Сортируем по уровню
+                pairs.sort(key=lambda x: x[1].level)
 
-            pairs.sort(key=lambda x: x[1].level)
+                i = 0
+                while i < len(pairs) - 1:
+                    exp1, p1 = pairs[i]
+                    exp2, p2 = pairs[i+1]
 
-            i = 0
-            while i < len(pairs) - 1:
-                exp1, p1 = pairs[i]
-                exp2, p2 = pairs[i+1]
-
-                # Пропускаем если кто-то уже в паре
-                if p1.id in matched_player_ids or p2.id in matched_player_ids:
-                    i += 1
-                    continue
-
-                # Проверяем баланс (разница <= 2 уровня)
-
-                if abs(p1.level - p2.level) <= 2:
-                    try:
-                        # Проверяем вылазки
-                        exp1.interrupt_for_duel(p2.id)
-                        exp2.interrupt_for_duel(p1.id)
-
-                        # сохраняем экспедиции
-                        await uow.expeditions.save(exp1)
-                        await uow.expeditions.save(exp2)
-
-                        # сохраняем сматченные пары чтобы не сматчить их еще раз
-                        matched_player_ids.update([p1.id, p2.id])
-
-                        i += 2
-
-                    except Exception:
-                        # TODO: добавить логирование ошибок
+                    # Пропускаем если кто-то уже в паре
+                    if p1.id in matched_player_ids or p2.id in matched_player_ids:
                         i += 1
-                else:
-                    i += 1
+                        continue
+
+                    # Проверяем баланс (разница <= 2 уровня)
+                    if abs(p1.level - p2.level) <= 2:
+                        try:
+                            # Проверяем вылазки
+                            exp1.interrupt_for_duel(p2.id)
+                            exp2.interrupt_for_duel(p1.id)
+
+                            # сохраняем экспедиции
+                            await uow.expeditions.save(exp1)
+                            await uow.expeditions.save(exp2)
+
+                            # сохраняем сматченные пары чтобы не сматчить их еще раз
+                            matched_player_ids.update([p1.id, p2.id])
+
+                            i += 2
+
+                        except Exception:
+                            # TODO: добавить логирование ошибок
+                            i += 1
+                    else:
+                        i += 1
 
     async def _load_players(self, player_ids: List[str], uow: UnitOfWork) -> dict[str, Player]:
         """Загружает игроков и фильтрует успешные загрузки."""

@@ -45,6 +45,7 @@ class PvpVictory(BattleOutcome):
     winner: BattleParticipant
     loser: BattleParticipant
     loot: list[ItemInstance]
+    experience_gained: int
     
 @dataclass(frozen=True)
 class BattleResult:

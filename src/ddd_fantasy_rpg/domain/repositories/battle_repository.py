@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ddd_fantasy_rpg.domain.battle import Battle
+    from ddd_fantasy_rpg.domain.battle.battle import Battle
 
 class BattleRepository(ABC):
     @abstractmethod
